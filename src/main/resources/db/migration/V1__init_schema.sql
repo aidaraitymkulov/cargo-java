@@ -38,8 +38,8 @@ CREATE TABLE users (
     password_hash VARCHAR NOT NULL,
     first_name    VARCHAR NOT NULL,
     last_name     VARCHAR NOT NULL,
-    phone         VARCHAR,
-    date_of_birth DATE,
+    phone         VARCHAR NOT NULL,
+    date_of_birth DATE    NOT NULL,
     personal_code VARCHAR UNIQUE,
     branch_id     UUID REFERENCES branches(id),
     role_id       UUID NOT NULL REFERENCES user_roles(id),
@@ -142,7 +142,7 @@ CREATE TABLE refresh_sessions (
 -- ====================================================
 CREATE TABLE confirmations (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    code                VARCHAR(12) NOT NULL,
+    code                VARCHAR(4) NOT NULL,
     confirmation_status VARCHAR     NOT NULL,
     attempts            INT         DEFAULT 3,
     expires_at          TIMESTAMP,
