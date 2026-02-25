@@ -37,11 +37,13 @@ public class SecurityConfig {
                                 "/auth/register",
                                 "/auth/confirm",
                                 "/auth/login",
-                                "/auth/refresh"
+                                "/auth/refresh",
+                                "/auth/logout"
                         ).permitAll()
                         .requestMatchers(
                                 "/admin/auth/login",
-                                "/admin/auth/refresh"
+                                "/admin/auth/refresh",
+                                "/admin/auth/logout"
                         ).permitAll()
                         .requestMatchers("/admin/**")
                                 .hasAnyRole("MANAGER", "SUPER_ADMIN")

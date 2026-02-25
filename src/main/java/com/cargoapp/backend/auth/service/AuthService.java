@@ -1,9 +1,11 @@
 package com.cargoapp.backend.auth.service;
 
 import com.cargoapp.backend.auth.config.JwtProperties;
+import com.cargoapp.backend.auth.dto.AuthResponse;
 import com.cargoapp.backend.auth.dto.LoginRequest;
 import com.cargoapp.backend.auth.dto.RegisterRequest;
 import com.cargoapp.backend.auth.dto.TokenPairDto;
+import com.cargoapp.backend.auth.mapper.AuthMapper;
 import com.cargoapp.backend.auth.entity.ConfirmationEntity;
 import com.cargoapp.backend.auth.entity.ConfirmationStatus;
 import com.cargoapp.backend.auth.entity.RefreshSessionEntity;
@@ -38,6 +40,7 @@ public class AuthService {
     private final RefreshSessionRepository refreshSessionRepository;
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
+    private final AuthMapper authMapper;
 
     @Transactional
     public void register(RegisterRequest request) {
@@ -92,7 +95,7 @@ public class AuthService {
     }
 
     @Transactional
-    public TokenPairDto login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request) {
         UserEntity user = userRepository.findByLogin(request.login())
                 .orElseThrow(() -> new RuntimeException("INVALID_CREDENTIALS"));
 
@@ -117,9 +120,10 @@ public class AuthService {
         );
         String refreshToken = jwtService.generateRefreshToken(jti);
 
-        return new TokenPairDto(accessToken, refreshToken);
+        return authMapper.toAuthResponse(user, accessToken, refreshToken);
     }
 
+    @Transactional
     public void logout(String refreshToken) {
         String jti = jwtService.extractRefreshClaims(refreshToken).getId();
         refreshSessionRepository.revokeByJti(jti, LocalDateTime.now());

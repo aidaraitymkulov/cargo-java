@@ -47,6 +47,6 @@ public class AuthMapper {
     }
 
     public WebAuthResponse toWebAuthResponse(UserEntity user) {
-        return new WebAuthResponse(true, toUserResponse(user));
+        return new WebAuthResponse(toUserResponse(user));
     }
 }
