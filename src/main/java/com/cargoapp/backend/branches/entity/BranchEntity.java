@@ -28,7 +28,8 @@ public class BranchEntity {
     @Column(nullable = false, unique = true)
     private String personalCodePrefix;
 
-    private boolean isActive = true;
+    @Column(name = "is_active", nullable = false)
+    private boolean active = true;
     private int nextSequence = 1;
 
     @CreationTimestamp

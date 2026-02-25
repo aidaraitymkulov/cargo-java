@@ -32,7 +32,8 @@ public class UserPersonalCodeEntity {
     @JoinColumn(name = "branch_id", nullable = false)
     private BranchEntity branch;
 
-    private boolean isActive = false;
+    @Column(name = "is_active", nullable = false)
+    private boolean active = false;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

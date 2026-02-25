@@ -22,9 +22,9 @@ public class AuthMapper {
           user.getPersonalCode(),
           user.getRole().getRoleName(),
           toBranchResponse(user.getBranch()),
-          user.getStatus(),
-          user.getCreatedAt().toString(),
-          user.getUpdatedAt().toString()
+          user.getStatus().name(),
+          user.getCreatedAt(),
+          user.getUpdatedAt()
         );
     }
 
@@ -46,7 +46,7 @@ public class AuthMapper {
         );
     }
 
-    public WebAuthResponse toWebAuthresponse(UserEntity user) {
+    public WebAuthResponse toWebAuthResponse(UserEntity user) {
         return new WebAuthResponse(true, toUserResponse(user));
     }
 }

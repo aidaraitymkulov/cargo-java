@@ -1,5 +1,7 @@
 package com.cargoapp.backend.auth.dto;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record UserResponse(
@@ -8,11 +10,11 @@ public record UserResponse(
         String firstName,
         String lastName,
         String phone,
-        String dateOfBirth,
+        LocalDate dateOfBirth,
         String personalCode,
         String role,
         BranchResponse branch,
-        int status,
-        String createdAt,
-        String updatedAt
+        String status,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 ) {}
