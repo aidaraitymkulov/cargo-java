@@ -34,6 +34,7 @@ CREATE TABLE branches (
 -- ====================================================
 CREATE TABLE users (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    login         VARCHAR NOT NULL UNIQUE,
     email         VARCHAR NOT NULL UNIQUE,
     password_hash VARCHAR NOT NULL,
     first_name    VARCHAR NOT NULL,

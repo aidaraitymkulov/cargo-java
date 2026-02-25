@@ -10,6 +10,10 @@ import java.util.UUID;
 
 public record RegisterRequest(
 
+        @NotBlank(message = "Логин обязателен")
+        @Size(min = 3, message = "Логин минимум 3 символа")
+        String login,
+
         @NotBlank(message = "Имя обязательно")
         String firstName,
 
