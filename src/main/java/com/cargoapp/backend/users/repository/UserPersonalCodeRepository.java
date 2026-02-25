@@ -8,6 +8,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserPersonalCodeRepository extends JpaRepository<UserPersonalCodeEntity, UUID> {
-    Optional <UserPersonalCodeEntity> findByPersonalCodeAndIsActiveTrue(String personalCode);
+    Optional<UserPersonalCodeEntity> findByPersonalCodeAndActiveTrue(String personalCode);
     List<UserPersonalCodeEntity> findAllByUser_Id(UUID userId);
 }

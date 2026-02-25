@@ -25,6 +25,9 @@ public class UserEntity {
     private UUID id;
 
     @Column(unique = true, nullable = false)
+    private String login;
+
+    @Column(unique = true, nullable = false)
     private String email;
 
     @Column(nullable = false)
@@ -54,7 +57,10 @@ public class UserEntity {
     private UserRoleEntity role;
 
     private boolean chatBanned = false;
-    private int status = 0;
+
+    @Enumerated(EnumType.ORDINAL)
+    @Column(nullable = false)
+    private UserStatus status = UserStatus.ACTIVE;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

@@ -21,9 +21,11 @@ public class ConfirmationEntity {
     @Column(nullable = false, length = 4)
     private String code;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String confirmationStatus;
+    private ConfirmationStatus confirmationStatus;
 
+    @Column(nullable = false)
     private int attempts = 3;
 
     private LocalDateTime expiresAt;
