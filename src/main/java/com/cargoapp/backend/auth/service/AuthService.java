@@ -17,8 +17,10 @@ import com.cargoapp.backend.users.entity.UserEntity;
 import com.cargoapp.backend.users.entity.UserPersonalCodeEntity;
 import com.cargoapp.backend.users.repository.UserPersonalCodeRepository;
 import com.cargoapp.backend.users.repository.UserRepository;
+import com.cargoapp.backend.common.exception.AppException;
 import com.cargoapp.backend.users.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,17 +47,17 @@ public class AuthService {
     @Transactional
     public void register(RegisterRequest request) {
         if (userRepository.existsByLogin(request.login())) {
-            throw new RuntimeException("CONFLICT");
+            throw new AppException("CONFLICT", HttpStatus.CONFLICT, "Логин уже занят");
         }
         if (userRepository.existsByEmail(request.email())) {
-            throw new RuntimeException("CONFLICT");
+            throw new AppException("CONFLICT", HttpStatus.CONFLICT, "Email уже занят");
         }
 
         BranchEntity branch = branchRepository.findById(request.branchId())
-                .orElseThrow(() -> new RuntimeException("BRANCH_NOT_FOUND"));
+                .orElseThrow(() -> new AppException("BRANCH_NOT_FOUND", HttpStatus.NOT_FOUND, "Филиал не найден"));
 
         var role = userRoleRepository.findByRoleName("USER")
-                .orElseThrow(() -> new RuntimeException("ROLE_NOT_FOUND"));
+                .orElseThrow(() -> new AppException("INTERNAL_ERROR", HttpStatus.INTERNAL_SERVER_ERROR, "Роль не найдена"));
 
         String personalCode = String.format("%s%04d", branch.getPersonalCodePrefix(), branch.getNextSequence());
 
@@ -97,10 +99,10 @@ public class AuthService {
     @Transactional
     public AuthResponse login(LoginRequest request) {
         UserEntity user = userRepository.findByLogin(request.login())
-                .orElseThrow(() -> new RuntimeException("INVALID_CREDENTIALS"));
+                .orElseThrow(() -> new AppException("INVALID_CREDENTIALS", HttpStatus.UNAUTHORIZED, "Неверный логин или пароль"));
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new RuntimeException("INVALID_CREDENTIALS");
+            throw new AppException("INVALID_CREDENTIALS", HttpStatus.UNAUTHORIZED, "Неверный логин или пароль");
         }
 
         String jti = UUID.randomUUID().toString();
@@ -132,13 +134,13 @@ public class AuthService {
     @Transactional
     public TokenPairDto refreshToken(String refreshToken) {
         if (!jwtService.validateRefreshToken(refreshToken)) {
-            throw new RuntimeException("INVALID_TOKEN");
+            throw new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Недействительный токен");
         }
 
         String jti = jwtService.extractRefreshClaims(refreshToken).getId();
 
         RefreshSessionEntity oldSession = refreshSessionRepository.findByJtiAndRevokedAtIsNull(jti)
-                .orElseThrow(() -> new RuntimeException("INVALID_TOKEN"));
+                .orElseThrow(() -> new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Сессия не найдена или отозвана"));
 
         refreshSessionRepository.revokeByJti(jti, LocalDateTime.now());
 

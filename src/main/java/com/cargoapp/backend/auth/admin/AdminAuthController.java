@@ -1,6 +1,8 @@
 package com.cargoapp.backend.auth.admin;
 
 import com.cargoapp.backend.auth.config.JwtProperties;
+import com.cargoapp.backend.common.exception.AppException;
+import org.springframework.http.HttpStatus;
 import com.cargoapp.backend.auth.dto.AuthResponse;
 import com.cargoapp.backend.auth.dto.LoginRequest;
 import com.cargoapp.backend.auth.dto.TokenPairDto;
@@ -37,7 +39,7 @@ public class AdminAuthController {
     public void refresh(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = extractCookie(request, "refreshToken");
         if (refreshToken == null) {
-            throw new RuntimeException("INVALID_TOKEN");
+            throw new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Refresh токен отсутствует");
         }
         TokenPairDto tokens = authService.refreshToken(refreshToken);
         setTokenCookies(response, tokens.accessToken(), tokens.refreshToken());
