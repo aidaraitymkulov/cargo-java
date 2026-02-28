@@ -15,6 +15,10 @@
     {
       "key": "refreshToken",
       "value": ""
+    },
+    {
+      "key": "branchId",
+      "value": ""
     }
   ],
   "item": [
@@ -27,11 +31,14 @@
             "method": "POST",
             "url": "{{baseUrl}}/auth/register",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"login\": \"john_doe\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"+996700000001\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"password\": \"secret123\",\n  \"branchId\": \"00000000-0000-0000-0000-000000000001\"\n}"
+              "raw": "{\n  \"login\": \"john_doe\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"aitymkulovich@gmail.com\",\n  \"phone\": \"+996700000001\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"password\": \"secret123\",\n  \"branchId\": \"{{branchId}}\"\n}"
             }
           }
         },
@@ -53,7 +60,10 @@
             "method": "POST",
             "url": "{{baseUrl}}/auth/login",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -79,7 +89,10 @@
             "method": "POST",
             "url": "{{baseUrl}}/auth/refresh",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -93,7 +106,10 @@
             "method": "POST",
             "url": "{{baseUrl}}/auth/logout",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -102,12 +118,28 @@
           }
         },
         {
+          "name": "Resend Confirmation",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/auth/resend?login=john_doe",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "resend"],
+              "query": [{ "key": "login", "value": "john_doe" }]
+            },
+            "header": []
+          }
+        },
+        {
           "name": "Confirm Email",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/auth/confirm",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -126,8 +158,14 @@
             "method": "POST",
             "url": "{{baseUrl}}/auth/login",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Client-Type", "value": "web" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -141,9 +179,15 @@
             "method": "POST",
             "url": "{{baseUrl}}/auth/refresh",
             "header": [
-              { "key": "X-Client-Type", "value": "web" }
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
             ],
-            "body": { "mode": "raw", "raw": "" }
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            }
           }
         },
         {
@@ -152,9 +196,15 @@
             "method": "POST",
             "url": "{{baseUrl}}/auth/logout",
             "header": [
-              { "key": "X-Client-Type", "value": "web" }
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
             ],
-            "body": { "mode": "raw", "raw": "" }
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            }
           }
         }
       ]
@@ -168,7 +218,23 @@
             "method": "GET",
             "url": "{{baseUrl}}/users/me",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Me (Web)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/me",
+            "header": [
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
             ]
           }
         }

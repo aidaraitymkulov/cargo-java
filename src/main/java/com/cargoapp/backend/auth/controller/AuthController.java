@@ -97,6 +97,12 @@ public class AuthController {
         authService.confirm(request);
     }
 
+    @PostMapping("/resend")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resend(@RequestParam String login) {
+        authService.resendConfirmation(login);
+    }
+
     private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
         response.addHeader("Set-Cookie", buildCookie("accessToken", accessToken,
                 jwtProperties.getAccessExpirationMs() / 1000).toString());

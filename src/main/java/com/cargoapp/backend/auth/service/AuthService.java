@@ -104,6 +104,13 @@ public class AuthService {
             throw new AppException("INVALID_CREDENTIALS", HttpStatus.UNAUTHORIZED, "Неверный логин или пароль");
         }
 
+        boolean emailNotConfirmed = confirmationRepository
+                .findByUser_IdAndConfirmationStatus(user.getId(), ConfirmationStatus.PENDING)
+                .isPresent();
+        if (emailNotConfirmed) {
+            throw new AppException("EMAIL_NOT_CONFIRMED", HttpStatus.FORBIDDEN, "Email не подтверждён");
+        }
+
         String jti = UUID.randomUUID().toString();
 
         RefreshSessionEntity session = new RefreshSessionEntity();
@@ -184,5 +191,29 @@ public class AuthService {
 
         confirmation.setConfirmationStatus(ConfirmationStatus.VERIFIED);
         confirmationRepository.save(confirmation);
+    }
+
+    @Transactional
+    public void resendConfirmation(String login) {
+        UserEntity user = userRepository.findByLogin(login)
+                .orElseThrow(() -> new AppException("USER_NOT_FOUND", HttpStatus.NOT_FOUND, "Пользователь не найден"));
+
+        ConfirmationEntity confirmation = confirmationRepository
+                .findByUser_IdAndConfirmationStatus(user.getId(), ConfirmationStatus.PENDING)
+                .orElseThrow(() -> new AppException("INVALID_CONFIRMATION_CODE", HttpStatus.BAD_REQUEST, "Нет активного кода подтверждения"));
+
+        if (confirmation.getLastSentAt() != null &&
+                confirmation.getLastSentAt().isAfter(LocalDateTime.now().minusSeconds(60))) {
+            throw new AppException("RESEND_TOO_SOON", HttpStatus.TOO_MANY_REQUESTS, "Повторная отправка возможна через 60 секунд");
+        }
+
+        String newCode = String.format("%04d", new SecureRandom().nextInt(10000));
+        confirmation.setCode(newCode);
+        confirmation.setAttempts(3);
+        confirmation.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+        confirmation.setLastSentAt(LocalDateTime.now());
+        confirmationRepository.save(confirmation);
+
+        emailService.sendConfirmationCode(user.getEmail(), newCode);
     }
 }
