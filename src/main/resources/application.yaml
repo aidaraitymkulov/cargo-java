@@ -1,6 +1,8 @@
 spring:
   application:
-    name: adesexpress-backend
+    name: cargoapp-backend
+  profiles:
+    active: local
 
   jpa:
     hibernate:
