@@ -1,24 +1,23 @@
 package com.cargoapp.backend.auth.service;
 
 import com.cargoapp.backend.auth.config.JwtProperties;
-import com.cargoapp.backend.auth.dto.AuthResponse;
-import com.cargoapp.backend.auth.dto.LoginRequest;
-import com.cargoapp.backend.auth.dto.RegisterRequest;
-import com.cargoapp.backend.auth.dto.TokenPairDto;
-import com.cargoapp.backend.auth.mapper.AuthMapper;
+import com.cargoapp.backend.auth.dto.*;
 import com.cargoapp.backend.auth.entity.ConfirmationEntity;
 import com.cargoapp.backend.auth.entity.ConfirmationStatus;
 import com.cargoapp.backend.auth.entity.RefreshSessionEntity;
+import com.cargoapp.backend.auth.mapper.AuthMapper;
 import com.cargoapp.backend.auth.repository.ConfirmationRepository;
 import com.cargoapp.backend.auth.repository.RefreshSessionRepository;
 import com.cargoapp.backend.branches.entity.BranchEntity;
 import com.cargoapp.backend.branches.repository.BranchRepository;
+import com.cargoapp.backend.common.exception.AppException;
 import com.cargoapp.backend.users.entity.UserEntity;
 import com.cargoapp.backend.users.entity.UserPersonalCodeEntity;
 import com.cargoapp.backend.users.repository.UserPersonalCodeRepository;
 import com.cargoapp.backend.users.repository.UserRepository;
 import com.cargoapp.backend.users.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,21 +40,22 @@ public class AuthService {
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
     private final AuthMapper authMapper;
+    private final EmailService emailService;
 
     @Transactional
     public void register(RegisterRequest request) {
         if (userRepository.existsByLogin(request.login())) {
-            throw new RuntimeException("CONFLICT");
+            throw new AppException("CONFLICT", HttpStatus.CONFLICT, "Логин уже занят");
         }
         if (userRepository.existsByEmail(request.email())) {
-            throw new RuntimeException("CONFLICT");
+            throw new AppException("CONFLICT", HttpStatus.CONFLICT, "Email уже занят");
         }
 
         BranchEntity branch = branchRepository.findById(request.branchId())
-                .orElseThrow(() -> new RuntimeException("BRANCH_NOT_FOUND"));
+                .orElseThrow(() -> new AppException("BRANCH_NOT_FOUND", HttpStatus.NOT_FOUND, "Филиал не найден"));
 
         var role = userRoleRepository.findByRoleName("USER")
-                .orElseThrow(() -> new RuntimeException("ROLE_NOT_FOUND"));
+                .orElseThrow(() -> new AppException("INTERNAL_ERROR", HttpStatus.INTERNAL_SERVER_ERROR, "Роль не найдена"));
 
         String personalCode = String.format("%s%04d", branch.getPersonalCodePrefix(), branch.getNextSequence());
 
@@ -92,15 +92,23 @@ public class AuthService {
         confirmation.setExpiresAt(LocalDateTime.now().plusMinutes(5));
         confirmation.setLastSentAt(LocalDateTime.now());
         confirmationRepository.save(confirmation);
+        emailService.sendConfirmationCode(user.getEmail(), code);
     }
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
         UserEntity user = userRepository.findByLogin(request.login())
-                .orElseThrow(() -> new RuntimeException("INVALID_CREDENTIALS"));
+                .orElseThrow(() -> new AppException("INVALID_CREDENTIALS", HttpStatus.UNAUTHORIZED, "Неверный логин или пароль"));
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new RuntimeException("INVALID_CREDENTIALS");
+            throw new AppException("INVALID_CREDENTIALS", HttpStatus.UNAUTHORIZED, "Неверный логин или пароль");
+        }
+
+        boolean emailNotConfirmed = confirmationRepository
+                .findByUser_IdAndConfirmationStatus(user.getId(), ConfirmationStatus.PENDING)
+                .isPresent();
+        if (emailNotConfirmed) {
+            throw new AppException("EMAIL_NOT_CONFIRMED", HttpStatus.FORBIDDEN, "Email не подтверждён");
         }
 
         String jti = UUID.randomUUID().toString();
@@ -132,13 +140,13 @@ public class AuthService {
     @Transactional
     public TokenPairDto refreshToken(String refreshToken) {
         if (!jwtService.validateRefreshToken(refreshToken)) {
-            throw new RuntimeException("INVALID_TOKEN");
+            throw new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Недействительный токен");
         }
 
         String jti = jwtService.extractRefreshClaims(refreshToken).getId();
 
         RefreshSessionEntity oldSession = refreshSessionRepository.findByJtiAndRevokedAtIsNull(jti)
-                .orElseThrow(() -> new RuntimeException("INVALID_TOKEN"));
+                .orElseThrow(() -> new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Сессия не найдена или отозвана"));
 
         refreshSessionRepository.revokeByJti(jti, LocalDateTime.now());
 
@@ -157,5 +165,55 @@ public class AuthService {
         String newRefreshToken = jwtService.generateRefreshToken(newJti);
 
         return new TokenPairDto(accessToken, newRefreshToken);
+    }
+
+    @Transactional
+    public void confirm(ConfirmRequest request) {
+        UserEntity user = userRepository.findByLogin(request.login())
+                .orElseThrow(() -> new AppException("USER_NOT_FOUND", HttpStatus.NOT_FOUND, "Пользователь не найден"));
+
+        ConfirmationEntity confirmation = confirmationRepository.findByUser_IdAndConfirmationStatus(user.getId(), ConfirmationStatus.PENDING)
+                .orElseThrow(() -> new AppException("INVALID_CONFIRMATION_CODE", HttpStatus.BAD_REQUEST, "Нет активного кода подтверждения"));
+
+        if (confirmation.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new AppException("INVALID_CONFIRMATION_CODE", HttpStatus.BAD_REQUEST, "Код подтверждения истёк");
+        }
+
+        if (confirmation.getAttempts() <= 0) {
+            throw new AppException("INVALID_CONFIRMATION_CODE", HttpStatus.BAD_REQUEST, "Превышено количество попыток");
+        }
+
+        if (!confirmation.getCode().equals(request.code())) {
+            confirmation.setAttempts(confirmation.getAttempts() - 1);
+            confirmationRepository.save(confirmation);
+            throw new AppException("INVALID_CONFIRMATION_CODE", HttpStatus.BAD_REQUEST, "Неверный код подтверждения");
+        }
+
+        confirmation.setConfirmationStatus(ConfirmationStatus.VERIFIED);
+        confirmationRepository.save(confirmation);
+    }
+
+    @Transactional
+    public void resendConfirmation(String login) {
+        UserEntity user = userRepository.findByLogin(login)
+                .orElseThrow(() -> new AppException("USER_NOT_FOUND", HttpStatus.NOT_FOUND, "Пользователь не найден"));
+
+        ConfirmationEntity confirmation = confirmationRepository
+                .findByUser_IdAndConfirmationStatus(user.getId(), ConfirmationStatus.PENDING)
+                .orElseThrow(() -> new AppException("INVALID_CONFIRMATION_CODE", HttpStatus.BAD_REQUEST, "Нет активного кода подтверждения"));
+
+        if (confirmation.getLastSentAt() != null &&
+                confirmation.getLastSentAt().isAfter(LocalDateTime.now().minusSeconds(60))) {
+            throw new AppException("RESEND_TOO_SOON", HttpStatus.TOO_MANY_REQUESTS, "Повторная отправка возможна через 60 секунд");
+        }
+
+        String newCode = String.format("%04d", new SecureRandom().nextInt(10000));
+        confirmation.setCode(newCode);
+        confirmation.setAttempts(3);
+        confirmation.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+        confirmation.setLastSentAt(LocalDateTime.now());
+        confirmationRepository.save(confirmation);
+
+        emailService.sendConfirmationCode(user.getEmail(), newCode);
     }
 }
