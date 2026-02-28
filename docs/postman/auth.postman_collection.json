@@ -104,15 +104,16 @@
       ]
     },
     {
-      "name": "Admin",
+      "name": "Admin (Web)",
       "item": [
         {
           "name": "Login",
           "request": {
             "method": "POST",
-            "url": "{{baseUrl}}/admin/auth/login",
+            "url": "{{baseUrl}}/auth/login",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Client-Type", "value": "web" }
             ],
             "body": {
               "mode": "raw",
@@ -124,8 +125,10 @@
           "name": "Refresh",
           "request": {
             "method": "POST",
-            "url": "{{baseUrl}}/admin/auth/refresh",
-            "header": [],
+            "url": "{{baseUrl}}/auth/refresh",
+            "header": [
+              { "key": "X-Client-Type", "value": "web" }
+            ],
             "body": { "mode": "raw", "raw": "" }
           }
         },
@@ -133,8 +136,10 @@
           "name": "Logout",
           "request": {
             "method": "POST",
-            "url": "{{baseUrl}}/admin/auth/logout",
-            "header": [],
+            "url": "{{baseUrl}}/auth/logout",
+            "header": [
+              { "key": "X-Client-Type", "value": "web" }
+            ],
             "body": { "mode": "raw", "raw": "" }
           }
         }

@@ -3,7 +3,6 @@ package com.cargoapp.backend.auth.mapper;
 import com.cargoapp.backend.auth.dto.AuthResponse;
 import com.cargoapp.backend.auth.dto.BranchResponse;
 import com.cargoapp.backend.auth.dto.UserResponse;
-import com.cargoapp.backend.auth.dto.WebAuthResponse;
 import com.cargoapp.backend.branches.entity.BranchEntity;
 import com.cargoapp.backend.users.entity.UserEntity;
 import org.springframework.stereotype.Component;
@@ -44,9 +43,5 @@ public class AuthMapper {
                 refreshToken,
                 toUserResponse(user)
         );
-    }
-
-    public WebAuthResponse toWebAuthResponse(UserEntity user) {
-        return new WebAuthResponse(toUserResponse(user));
     }
 }
