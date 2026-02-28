@@ -17,4 +17,8 @@ public interface RefreshSessionRepository extends JpaRepository<RefreshSessionEn
     @Modifying
     @Query("UPDATE RefreshSessionEntity r SET r.revokedAt = :now WHERE r.jti = :jti")
     void revokeByJti(@Param("jti") String jti, @Param("now") LocalDateTime now);
+
+    @Modifying
+    @Query("UPDATE RefreshSessionEntity r SET r.revokedAt = :now WHERE r.user.id = :userId AND r.revokedAt IS NULL")
+    void revokeAllActiveByUserId(@Param("userId") UUID userId, @Param("now") LocalDateTime now);
 }

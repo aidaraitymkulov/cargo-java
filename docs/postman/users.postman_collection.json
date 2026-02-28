@@ -1,0 +1,260 @@
+{
+  "info": {
+    "name": "CargoApp — Users",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "managerId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Mobile",
+      "item": [
+        {
+          "name": "GET /users/me",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/me",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "description": "Получить свой профиль. Требует авторизации."
+          }
+        },
+        {
+          "name": "PATCH /users/me",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/users/me",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Айдар\",\n  \"lastName\": \"Тестов\",\n  \"email\": \"newemail@example.com\",\n  \"phone\": \"+996700000002\"\n}"
+            },
+            "description": "Обновить профиль. Все поля опциональны."
+          }
+        },
+        {
+          "name": "PATCH /users/me/change-password",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/users/me/change-password",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"secret123\",\n  \"newPassword\": \"newSecret123\"\n}"
+            },
+            "description": "Сменить пароль."
+          }
+        },
+        {
+          "name": "PATCH /users/me/branch",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/users/me/branch",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branchId\": \"{{branchId}}\"\n}"
+            },
+            "description": "Сменить филиал. Генерируется новый personalCode."
+          }
+        },
+        {
+          "name": "POST /users/me/deletion-request",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/users/me/deletion-request",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "description": "Запрос на удаление аккаунта. Статус → PENDING_DELETION."
+          }
+        },
+        {
+          "name": "DELETE /users/me/deletion-request",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/users/me/deletion-request",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "description": "Отмена удаления аккаунта. Статус → ACTIVE."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Users",
+      "item": [
+        {
+          "name": "GET /admin/users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/users?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                { "key": "prefix", "value": "AN", "disabled": true },
+                { "key": "code", "value": "0001", "disabled": true },
+                { "key": "branchId", "value": "", "disabled": true },
+                { "key": "role", "value": "USER", "disabled": true }
+              ]
+            },
+            "description": "Список пользователей с фильтрами. MANAGER + SUPER_ADMIN."
+          }
+        },
+        {
+          "name": "GET /admin/users/:id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/users/{{userId}}",
+            "description": "Получить одного пользователя. MANAGER + SUPER_ADMIN."
+          }
+        },
+        {
+          "name": "DELETE /admin/users/:id",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/admin/users/{{userId}}",
+            "description": "Удалить пользователя (статус → DELETED). MANAGER + SUPER_ADMIN."
+          }
+        },
+        {
+          "name": "PATCH /admin/users/:id/chat-ban",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/admin/users/{{userId}}/chat-ban",
+            "description": "Забанить пользователя в чате. MANAGER + SUPER_ADMIN."
+          }
+        },
+        {
+          "name": "PATCH /admin/users/:id/chat-unban",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/admin/users/{{userId}}/chat-unban",
+            "description": "Разбанить пользователя в чате. MANAGER + SUPER_ADMIN."
+          }
+        },
+        {
+          "name": "GET /admin/users/:id/products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{userId}}/products?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "{{userId}}", "products"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            },
+            "description": "Посылки пользователя. MANAGER + SUPER_ADMIN."
+          }
+        },
+        {
+          "name": "GET /admin/users/:id/orders",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{userId}}/orders?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "{{userId}}", "orders"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            },
+            "description": "Заказы пользователя. MANAGER + SUPER_ADMIN."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Managers",
+      "item": [
+        {
+          "name": "POST /admin/managers",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/managers",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"manager@adesexpress.com\",\n  \"password\": \"Manager123\",\n  \"firstName\": \"Айгуль\",\n  \"lastName\": \"Сатыбалдиева\",\n  \"phone\": \"+996700000010\",\n  \"branchId\": \"{{branchId}}\",\n  \"role\": \"MANAGER\"\n}"
+            },
+            "description": "Создать менеджера или супер-админа. SUPER_ADMIN."
+          }
+        },
+        {
+          "name": "GET /admin/managers",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/managers?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "managers"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            },
+            "description": "Список менеджеров и супер-админов. SUPER_ADMIN."
+          }
+        },
+        {
+          "name": "PATCH /admin/managers/:id",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/admin/managers/{{managerId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Айгуль\",\n  \"lastName\": \"Омурова\",\n  \"phone\": \"+996700000011\"\n}"
+            },
+            "description": "Обновить данные менеджера. Все поля опциональны. SUPER_ADMIN."
+          }
+        },
+        {
+          "name": "DELETE /admin/managers/:id",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/admin/managers/{{managerId}}",
+            "description": "Удалить менеджера. Нельзя удалить себя. SUPER_ADMIN."
+          }
+        }
+      ]
+    }
+  ]
+}
