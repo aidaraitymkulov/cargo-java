@@ -5,6 +5,7 @@ import com.cargoapp.backend.auth.dto.*;
 import com.cargoapp.backend.auth.entity.ConfirmationEntity;
 import com.cargoapp.backend.auth.entity.ConfirmationStatus;
 import com.cargoapp.backend.auth.entity.RefreshSessionEntity;
+import com.cargoapp.backend.auth.event.ConfirmationEmailEvent;
 import com.cargoapp.backend.auth.mapper.AuthMapper;
 import com.cargoapp.backend.auth.repository.ConfirmationRepository;
 import com.cargoapp.backend.auth.repository.RefreshSessionRepository;
@@ -13,10 +14,12 @@ import com.cargoapp.backend.branches.repository.BranchRepository;
 import com.cargoapp.backend.common.exception.AppException;
 import com.cargoapp.backend.users.entity.UserEntity;
 import com.cargoapp.backend.users.entity.UserPersonalCodeEntity;
+import com.cargoapp.backend.users.entity.UserStatus;
 import com.cargoapp.backend.users.repository.UserPersonalCodeRepository;
 import com.cargoapp.backend.users.repository.UserRepository;
 import com.cargoapp.backend.users.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -40,7 +43,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
     private final AuthMapper authMapper;
-    private final EmailService emailService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void register(RegisterRequest request) {
@@ -51,7 +54,7 @@ public class AuthService {
             throw new AppException("CONFLICT", HttpStatus.CONFLICT, "Email уже занят");
         }
 
-        BranchEntity branch = branchRepository.findById(request.branchId())
+        BranchEntity branch = branchRepository.findByIdForUpdate(request.branchId())
                 .orElseThrow(() -> new AppException("BRANCH_NOT_FOUND", HttpStatus.NOT_FOUND, "Филиал не найден"));
 
         var role = userRoleRepository.findByRoleName("USER")
@@ -92,7 +95,7 @@ public class AuthService {
         confirmation.setExpiresAt(LocalDateTime.now().plusMinutes(5));
         confirmation.setLastSentAt(LocalDateTime.now());
         confirmationRepository.save(confirmation);
-        emailService.sendConfirmationCode(user.getEmail(), code);
+        eventPublisher.publishEvent(new ConfirmationEmailEvent(user.getEmail(), code));
     }
 
     @Transactional
@@ -102,6 +105,14 @@ public class AuthService {
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new AppException("INVALID_CREDENTIALS", HttpStatus.UNAUTHORIZED, "Неверный логин или пароль");
+        }
+
+        if (user.getStatus() == UserStatus.DELETED || user.getStatus() == UserStatus.PENDING_DELETION) {
+            throw new AppException("INVALID_CREDENTIALS", HttpStatus.UNAUTHORIZED, "Неверный логин или пароль");
+        }
+
+        if (user.getStatus() == UserStatus.INACTIVE) {
+            throw new AppException("FORBIDDEN", HttpStatus.FORBIDDEN, "Аккаунт заблокирован");
         }
 
         boolean emailNotConfirmed = confirmationRepository
@@ -133,6 +144,9 @@ public class AuthService {
 
     @Transactional
     public void logout(String refreshToken) {
+        if (!jwtService.validateRefreshToken(refreshToken)) {
+            throw new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Недействительный токен");
+        }
         String jti = jwtService.extractRefreshClaims(refreshToken).getId();
         refreshSessionRepository.revokeByJti(jti, LocalDateTime.now());
     }
@@ -213,7 +227,6 @@ public class AuthService {
         confirmation.setExpiresAt(LocalDateTime.now().plusMinutes(5));
         confirmation.setLastSentAt(LocalDateTime.now());
         confirmationRepository.save(confirmation);
-
-        emailService.sendConfirmationCode(user.getEmail(), newCode);
+        eventPublisher.publishEvent(new ConfirmationEmailEvent(user.getEmail(), newCode));
     }
 }

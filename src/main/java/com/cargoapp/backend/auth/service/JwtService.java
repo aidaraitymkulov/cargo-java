@@ -5,7 +5,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -14,45 +13,41 @@ import java.util.Date;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class JwtService {
 
     private final JwtProperties jwtProperties;
+    private final SecretKey accessKey;
+    private final SecretKey refreshKey;
+
+    public JwtService(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+        this.accessKey = Keys.hmacShaKeyFor(jwtProperties.getAccessSecret().getBytes(StandardCharsets.UTF_8));
+        this.refreshKey = Keys.hmacShaKeyFor(jwtProperties.getRefreshSecret().getBytes(StandardCharsets.UTF_8));
+    }
 
     public String generateAccessToken(UUID userId, String role, String jti) {
-        SecretKey key = Keys.hmacShaKeyFor(
-                jwtProperties.getAccessSecret().getBytes(StandardCharsets.UTF_8)
-        );
-
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("role", role)
                 .id(jti)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtProperties.getAccessExpirationMs()))
-                .signWith(key)
+                .signWith(accessKey)
                 .compact();
     }
 
     public String generateRefreshToken(String jti) {
-        SecretKey key = Keys.hmacShaKeyFor(
-                jwtProperties.getRefreshSecret().getBytes(StandardCharsets.UTF_8)
-        );
-
         return Jwts.builder()
                 .id(jti)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtProperties.getRefreshExpirationMs()))
-                .signWith(key)
+                .signWith(refreshKey)
                 .compact();
     }
 
     public boolean validateAccessToken(String token) {
         try {
-            SecretKey key = Keys.hmacShaKeyFor(
-                    jwtProperties.getAccessSecret().getBytes(StandardCharsets.UTF_8)
-            );
-            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
+            Jwts.parser().verifyWith(accessKey).build().parseSignedClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
@@ -60,18 +55,12 @@ public class JwtService {
     }
 
     public Claims extractAccessClaims(String token) {
-        SecretKey key = Keys.hmacShaKeyFor(
-                jwtProperties.getAccessSecret().getBytes(StandardCharsets.UTF_8)
-        );
-        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+        return Jwts.parser().verifyWith(accessKey).build().parseSignedClaims(token).getPayload();
     }
 
     public boolean validateRefreshToken(String token) {
         try {
-            SecretKey key = Keys.hmacShaKeyFor(
-                    jwtProperties.getRefreshSecret().getBytes(StandardCharsets.UTF_8)
-            );
-            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
+            Jwts.parser().verifyWith(refreshKey).build().parseSignedClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
@@ -79,9 +68,6 @@ public class JwtService {
     }
 
     public Claims extractRefreshClaims(String token) {
-        SecretKey key = Keys.hmacShaKeyFor(
-                jwtProperties.getRefreshSecret().getBytes(StandardCharsets.UTF_8)
-        );
-        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+        return Jwts.parser().verifyWith(refreshKey).build().parseSignedClaims(token).getPayload();
     }
 }
