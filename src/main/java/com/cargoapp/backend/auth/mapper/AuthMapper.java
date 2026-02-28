@@ -1,14 +1,17 @@
 package com.cargoapp.backend.auth.mapper;
 
 import com.cargoapp.backend.auth.dto.AuthResponse;
-import com.cargoapp.backend.auth.dto.BranchResponse;
 import com.cargoapp.backend.auth.dto.UserResponse;
-import com.cargoapp.backend.branches.entity.BranchEntity;
+import com.cargoapp.backend.branches.mapper.BranchMapper;
 import com.cargoapp.backend.users.entity.UserEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class AuthMapper {
+
+    private final BranchMapper branchMapper;
 
     public UserResponse toUserResponse(UserEntity user) {
         return new UserResponse(
@@ -20,20 +23,10 @@ public class AuthMapper {
           user.getDateOfBirth(),
           user.getPersonalCode(),
           user.getRole().getRoleName(),
-          toBranchResponse(user.getBranch()),
+          branchMapper.toBranchResponse(user.getBranch()),
           user.getStatus().name(),
           user.getCreatedAt(),
           user.getUpdatedAt()
-        );
-    }
-
-    public BranchResponse toBranchResponse(BranchEntity branch) {
-        if (branch == null) return null;
-        return new BranchResponse(
-                branch.getId(),
-                branch.getAddress(),
-                branch.getPersonalCodePrefix(),
-                branch.isActive()
         );
     }
 

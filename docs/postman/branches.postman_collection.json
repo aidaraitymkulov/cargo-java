@@ -1,0 +1,102 @@
+{
+  "info": {
+    "name": "CargoApp — Branches",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ],
+  "item": [
+    {
+      "name": "Mobile",
+      "item": [
+        {
+          "name": "GET /branches",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/branches",
+            "description": "Список активных филиалов. Без авторизации. Используется на экране регистрации."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "GET /admin/branches",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/branches?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "branches"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            },
+            "description": "Список всех филиалов с пагинацией. SUPER_ADMIN."
+          }
+        },
+        {
+          "name": "GET /admin/branches/:id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/branches/{{branchId}}",
+            "description": "Получить один филиал по ID. SUPER_ADMIN."
+          }
+        },
+        {
+          "name": "POST /admin/branches",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/branches",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"г. Бишкек, ул. Манаса 40\",\n  \"personalCodePrefix\": \"AN\"\n}"
+            },
+            "description": "Создать новый филиал. SUPER_ADMIN."
+          }
+        },
+        {
+          "name": "PATCH /admin/branches/:id",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/admin/branches/{{branchId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"г. Бишкек, ул. Чуй 123\"\n}"
+            },
+            "description": "Обновить адрес филиала. SUPER_ADMIN."
+          }
+        },
+        {
+          "name": "PATCH /admin/branches/:id/activate",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/admin/branches/{{branchId}}/activate",
+            "description": "Активировать филиал. SUPER_ADMIN."
+          }
+        },
+        {
+          "name": "PATCH /admin/branches/:id/deactivate",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/admin/branches/{{branchId}}/deactivate",
+            "description": "Деактивировать филиал. SUPER_ADMIN."
+          }
+        }
+      ]
+    }
+  ]
+}
