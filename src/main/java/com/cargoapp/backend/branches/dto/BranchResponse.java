@@ -1,4 +1,4 @@
-package com.cargoapp.backend.auth.dto;
+package com.cargoapp.backend.branches.dto;
 
 import java.util.UUID;
 
@@ -7,4 +7,5 @@ public record BranchResponse(
         String address,
         String personalCodePrefix,
         boolean isActive
-) {}
+) {
+}

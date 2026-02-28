@@ -1,5 +1,7 @@
 package com.cargoapp.backend.auth.dto;
 
+import com.cargoapp.backend.branches.dto.BranchResponse;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
