@@ -1,4 +1,4 @@
-package com.cargoapp.backend.auth.mobile;
+package com.cargoapp.backend.auth.controller;
 
 import com.cargoapp.backend.auth.config.JwtProperties;
 import com.cargoapp.backend.auth.dto.*;
@@ -89,6 +89,12 @@ public class AuthController {
             throw new AppException("VALIDATION_ERROR", HttpStatus.BAD_REQUEST, "refreshToken обязателен");
         }
         return authService.refreshToken(body.refreshToken());
+    }
+
+    @PostMapping("/confirm")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void confirm(@Valid @RequestBody ConfirmRequest request) {
+        authService.confirm(request);
     }
 
     private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {

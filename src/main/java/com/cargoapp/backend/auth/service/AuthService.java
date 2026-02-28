@@ -1,23 +1,20 @@
 package com.cargoapp.backend.auth.service;
 
 import com.cargoapp.backend.auth.config.JwtProperties;
-import com.cargoapp.backend.auth.dto.AuthResponse;
-import com.cargoapp.backend.auth.dto.LoginRequest;
-import com.cargoapp.backend.auth.dto.RegisterRequest;
-import com.cargoapp.backend.auth.dto.TokenPairDto;
-import com.cargoapp.backend.auth.mapper.AuthMapper;
+import com.cargoapp.backend.auth.dto.*;
 import com.cargoapp.backend.auth.entity.ConfirmationEntity;
 import com.cargoapp.backend.auth.entity.ConfirmationStatus;
 import com.cargoapp.backend.auth.entity.RefreshSessionEntity;
+import com.cargoapp.backend.auth.mapper.AuthMapper;
 import com.cargoapp.backend.auth.repository.ConfirmationRepository;
 import com.cargoapp.backend.auth.repository.RefreshSessionRepository;
 import com.cargoapp.backend.branches.entity.BranchEntity;
 import com.cargoapp.backend.branches.repository.BranchRepository;
+import com.cargoapp.backend.common.exception.AppException;
 import com.cargoapp.backend.users.entity.UserEntity;
 import com.cargoapp.backend.users.entity.UserPersonalCodeEntity;
 import com.cargoapp.backend.users.repository.UserPersonalCodeRepository;
 import com.cargoapp.backend.users.repository.UserRepository;
-import com.cargoapp.backend.common.exception.AppException;
 import com.cargoapp.backend.users.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -43,6 +40,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
     private final AuthMapper authMapper;
+    private final EmailService emailService;
 
     @Transactional
     public void register(RegisterRequest request) {
@@ -94,6 +92,7 @@ public class AuthService {
         confirmation.setExpiresAt(LocalDateTime.now().plusMinutes(5));
         confirmation.setLastSentAt(LocalDateTime.now());
         confirmationRepository.save(confirmation);
+        emailService.sendConfirmationCode(user.getEmail(), code);
     }
 
     @Transactional
@@ -159,5 +158,31 @@ public class AuthService {
         String newRefreshToken = jwtService.generateRefreshToken(newJti);
 
         return new TokenPairDto(accessToken, newRefreshToken);
+    }
+
+    @Transactional
+    public void confirm(ConfirmRequest request) {
+        UserEntity user = userRepository.findByLogin(request.login())
+                .orElseThrow(() -> new AppException("USER_NOT_FOUND", HttpStatus.NOT_FOUND, "Пользователь не найден"));
+
+        ConfirmationEntity confirmation = confirmationRepository.findByUser_IdAndConfirmationStatus(user.getId(), ConfirmationStatus.PENDING)
+                .orElseThrow(() -> new AppException("INVALID_CONFIRMATION_CODE", HttpStatus.BAD_REQUEST, "Нет активного кода подтверждения"));
+
+        if (confirmation.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new AppException("INVALID_CONFIRMATION_CODE", HttpStatus.BAD_REQUEST, "Код подтверждения истёк");
+        }
+
+        if (confirmation.getAttempts() <= 0) {
+            throw new AppException("INVALID_CONFIRMATION_CODE", HttpStatus.BAD_REQUEST, "Превышено количество попыток");
+        }
+
+        if (!confirmation.getCode().equals(request.code())) {
+            confirmation.setAttempts(confirmation.getAttempts() - 1);
+            confirmationRepository.save(confirmation);
+            throw new AppException("INVALID_CONFIRMATION_CODE", HttpStatus.BAD_REQUEST, "Неверный код подтверждения");
+        }
+
+        confirmation.setConfirmationStatus(ConfirmationStatus.VERIFIED);
+        confirmationRepository.save(confirmation);
     }
 }
