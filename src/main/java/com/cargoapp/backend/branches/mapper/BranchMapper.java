@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class BranchMapper {
     public BranchResponse toBranchResponse(BranchEntity branch) {
+        if (branch == null) return null;
         return new BranchResponse(
                 branch.getId(),
                 branch.getAddress(),

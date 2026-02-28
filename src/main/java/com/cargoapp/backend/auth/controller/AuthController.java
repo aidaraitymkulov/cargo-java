@@ -2,6 +2,7 @@ package com.cargoapp.backend.auth.controller;
 
 import com.cargoapp.backend.auth.config.JwtProperties;
 import com.cargoapp.backend.auth.dto.*;
+import com.cargoapp.backend.users.dto.UserResponse;
 import com.cargoapp.backend.auth.service.AuthService;
 import com.cargoapp.backend.common.exception.AppException;
 import jakarta.servlet.http.HttpServletRequest;

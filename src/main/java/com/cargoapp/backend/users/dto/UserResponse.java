@@ -1,4 +1,4 @@
-package com.cargoapp.backend.auth.dto;
+package com.cargoapp.backend.users.dto;
 
 import com.cargoapp.backend.branches.dto.BranchResponse;
 
