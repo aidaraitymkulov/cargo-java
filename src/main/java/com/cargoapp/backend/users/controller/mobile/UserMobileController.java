@@ -1,11 +1,11 @@
 package com.cargoapp.backend.users.controller.mobile;
 
+import com.cargoapp.backend.common.annotation.CurrentUserId;
 import com.cargoapp.backend.users.dto.*;
 import com.cargoapp.backend.users.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -19,49 +19,43 @@ public class UserMobileController {
     private final UserService userService;
 
     @GetMapping
-    public UserResponse getMe(Authentication authentication) {
-        UUID userId = UUID.fromString(authentication.getName());
+    public UserResponse getMe(@CurrentUserId UUID userId) {
         return userService.getMe(userId);
     }
 
     @PatchMapping
     public UserResponse updateProfile(
-            Authentication authentication,
+            @CurrentUserId UUID userId,
             @Valid @RequestBody UpdateProfileRequest request
     ) {
-        UUID userId = UUID.fromString(authentication.getName());
         return userService.updateProfile(userId, request);
     }
 
     @PatchMapping("/change-password")
     public Map<String, Boolean> changePassword(
-            Authentication authentication,
+            @CurrentUserId UUID userId,
             @Valid @RequestBody ChangePasswordRequest request
     ) {
-        UUID userId = UUID.fromString(authentication.getName());
         userService.changePassword(userId, request);
         return Map.of("success", true);
     }
 
     @PatchMapping("/branch")
     public UserResponse changeBranch(
-            Authentication authentication,
+            @CurrentUserId UUID userId,
             @Valid @RequestBody ChangeBranchRequest request
     ) {
-        UUID userId = UUID.fromString(authentication.getName());
         return userService.changeBranch(userId, request);
     }
 
     @PostMapping("/deletion-request")
     @ResponseStatus(HttpStatus.CREATED)
-    public DeletionResponseDto requestDeletion(Authentication authentication) {
-        UUID userId = UUID.fromString(authentication.getName());
+    public DeletionResponseDto requestDeletion(@CurrentUserId UUID userId) {
         return userService.requestDeletion(userId);
     }
 
     @DeleteMapping("/deletion-request")
-    public Map<String, Boolean> cancelDeletion(Authentication authentication) {
-        UUID userId = UUID.fromString(authentication.getName());
+    public Map<String, Boolean> cancelDeletion(@CurrentUserId UUID userId) {
         userService.cancelDeletion(userId);
         return Map.of("success", true);
     }
