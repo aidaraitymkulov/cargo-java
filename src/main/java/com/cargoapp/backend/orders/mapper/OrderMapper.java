@@ -2,8 +2,12 @@ package com.cargoapp.backend.orders.mapper;
 
 import com.cargoapp.backend.branches.mapper.BranchMapper;
 import com.cargoapp.backend.orders.dto.OrderAdminResponse;
+import com.cargoapp.backend.orders.dto.OrderDetailResponse;
 import com.cargoapp.backend.orders.dto.OrderResponse;
 import com.cargoapp.backend.orders.entity.OrderEntity;
+import com.cargoapp.backend.products.dto.ProductResponse;
+
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +24,19 @@ public class OrderMapper {
                 order.getWeight(),
                 order.getItemCount(),
                 order.getStatus(),
+                order.getCreatedAt(),
+                order.getUpdatedAt()
+        );
+    }
+
+    public OrderDetailResponse toOrderDetailResponse(OrderEntity order, List<ProductResponse> products) {
+        return new OrderDetailResponse(
+                order.getId(),
+                order.getPrice(),
+                order.getWeight(),
+                order.getItemCount(),
+                order.getStatus(),
+                products,
                 order.getCreatedAt(),
                 order.getUpdatedAt()
         );

@@ -30,7 +30,7 @@ public class ProductService {
     public PagedResponse<ProductResponse> getMyProducts(UUID userId, String status, int page, int pageSize) {
         var pageable = PageRequest.of(page - 1, pageSize, Sort.by("createdAt").descending());
         Page<ProductEntity> result = status != null
-                ? productRepository.findByUser_IdAndStatus(userId, ProductStatus.valueOf(status), pageable)
+                ? productRepository.findByUser_IdAndStatus(userId, parseProductStatus(status), pageable)
                 : productRepository.findByUser_Id(userId, pageable);
 
         var items = result.getContent().stream()
@@ -72,6 +72,20 @@ public class ProductService {
 
         // TODO: заполнить когда будет orders домен
         return new ItemsSummaryResponse(counts, 0L, 0L, lastUpdatedAt);
+    }
+
+    public List<ProductResponse> getProductsByOrderId(UUID orderId) {
+        return productRepository.findByOrderId(orderId).stream()
+                .map(productMapper::toProductResponse)
+                .toList();
+    }
+
+    private ProductStatus parseProductStatus(String status) {
+        try {
+            return ProductStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new AppException("VALIDATION_ERROR", HttpStatus.BAD_REQUEST, "Неверный статус: " + status);
+        }
     }
 
     public PagedResponse<ProductAdminResponse> getUserProductsForAdmin(UUID userId, int page, int pageSize) {
