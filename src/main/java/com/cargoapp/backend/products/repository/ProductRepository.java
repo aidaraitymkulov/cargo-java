@@ -28,4 +28,15 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
     @Query("SELECT MAX(p.updatedAt) FROM ProductEntity p WHERE p.user.id = :userId")
     Optional<LocalDateTime> findLastUpdatedAtByUserId(@Param("userId") UUID userId);
 
+    /**
+     * FIFO-поиск товара для KG-импорта.
+     * Ищем самый старый (по createdAt) непривязанный товар у клиента с данным hatch
+     * который ещё не доставлен.
+     */
+    Optional<ProductEntity> findFirstByUser_IdAndHatchAndOrderIdIsNullAndStatusNotOrderByCreatedAtAsc(
+            UUID userId,
+            String hatch,
+            ProductStatus excludedStatus
+    );
+
 }

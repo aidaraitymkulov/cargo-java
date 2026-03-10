@@ -1,0 +1,98 @@
+{
+  "info": {
+    "name": "CargoApp — Imports",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "prefix",
+      "value": "AN"
+    }
+  ],
+  "item": [
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Import from China (CN)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/import/parcels/cn",
+            "header": [
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Excel (.xlsx). Колонка A = hatch, Колонка B = personalCode"
+                }
+              ]
+            },
+            "description": "Импорт посылок из Китая.\n\nФормат файла:\n- Колонка A = hatch (трекинг-номер)\n- Колонка B = personalCode\n\nКаждая строка = один товар со статусом IN_CHINA.\nОшибки строк не останавливают импорт."
+          }
+        },
+        {
+          "name": "Import In-KG (after sorting)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/import/parcels/kg/{{prefix}}/in-kg",
+            "header": [
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Excel (.xlsx) с блочной структурой"
+                }
+              ]
+            },
+            "description": "Импорт после сортировки в КР. Создаёт заказы.\n\nФормат блока:\n           | YT12345 |     |\n           | YT62782 |     |\nAN0001     | YT39292 | 3.0 | 5000  ← итоговая строка\n\n- Колонка A = personalCode (только итоговая строка)\n- Колонка B = hatch\n- Колонка C = вес (только итоговая строка)\n- Колонка D = цена (только итоговая строка)\n\nМЕНЕДЖЕР может импортировать только свой филиал.\nSUPER_ADMIN — любой."
+          }
+        },
+        {
+          "name": "Import Delivered",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/import/parcels/kg/{{prefix}}/delivered",
+            "header": [
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Excel (.xlsx) — тот же формат что и in-kg"
+                }
+              ]
+            },
+            "description": "Импорт выдачи. Переводит заказы и товары в DELIVERED.\n\nТот же формат файла что и in-kg.\nИщет существующий Order по клиенту + набору hatch.\n\nВозможные ошибки блока:\n- ORDER_NOT_FOUND\n- ORDER_ALREADY_DELIVERED"
+          }
+        }
+      ]
+    }
+  ]
+}
