@@ -47,7 +47,10 @@ public class SecurityConfig {
                                 "/auth/refresh",
                                 "/auth/logout",
                                 "/auth/resend",
-                                "/branches"
+                                "/branches",
+                                "/news",
+                                "/news/**",
+                                "/uploads/**"
                         ).permitAll()
                         .requestMatchers("/admin/**")
                         .hasAnyRole("MANAGER", "SUPER_ADMIN")
