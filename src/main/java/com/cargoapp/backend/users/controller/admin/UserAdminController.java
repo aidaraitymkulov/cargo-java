@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -52,21 +51,4 @@ public class UserAdminController {
         return userService.chatUnban(userId);
     }
 
-    @GetMapping("/{userId}/products")
-    public PagedResponse<Object> getUserProducts(
-            @PathVariable UUID userId,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int pageSize
-    ) {
-        return new PagedResponse<>(List.of(), page, pageSize, 0);
-    }
-
-    @GetMapping("/{userId}/orders")
-    public PagedResponse<Object> getUserOrders(
-            @PathVariable UUID userId,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int pageSize
-    ) {
-        return new PagedResponse<>(List.of(), page, pageSize, 0);
-    }
 }

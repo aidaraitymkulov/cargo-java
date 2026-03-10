@@ -20,6 +20,8 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
 
     Optional<ProductEntity> findByIdAndUser_Id(UUID id, UUID userId);
 
+    List<ProductEntity> findByOrderId(UUID orderId);
+
     @Query("SELECT p.status, COUNT(p) FROM ProductEntity p WHERE p.user.id = :userId GROUP BY p.status")
     List<Object[]> countByStatusForUser(@Param("userId") UUID userId);
 
