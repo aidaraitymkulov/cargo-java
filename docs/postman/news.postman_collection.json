@@ -1,0 +1,173 @@
+{
+  "info": {
+    "name": "CargoApp — News",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "newsId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Mobile (публичный)",
+      "item": [
+        {
+          "name": "Get All News",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/news?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["news"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            },
+            "header": []
+          }
+        },
+        {
+          "name": "Get News By Id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/news/{{newsId}}",
+            "header": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get All News",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/news?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "news"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            },
+            "header": [
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get News By Id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/news/{{newsId}}",
+            "header": [
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Create News",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.collectionVariables.set('newsId', res.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/news",
+            "header": [
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "data",
+                  "value": "{\"title\": \"Заголовок новости\", \"content\": \"Текст новости\"}",
+                  "type": "text",
+                  "contentType": "application/json"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update News",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/admin/news/{{newsId}}",
+            "header": [
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "data",
+                  "value": "{\"title\": \"Обновлённый заголовок\"}",
+                  "type": "text",
+                  "contentType": "application/json"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": [],
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete News",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/admin/news/{{newsId}}",
+            "header": [
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
