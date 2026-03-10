@@ -1,7 +1,5 @@
 package com.cargoapp.backend.imports.service;
 
-import com.cargoapp.backend.branches.entity.BranchEntity;
-import com.cargoapp.backend.branches.repository.BranchRepository;
 import com.cargoapp.backend.common.exception.AppException;
 import com.cargoapp.backend.imports.dto.ImportErrorDto;
 import com.cargoapp.backend.imports.dto.ImportResultResponse;
@@ -35,16 +33,16 @@ public class ChinaImportService {
 
     private final ExcelImportParser parser;
     private final UserRepository userRepository;
-    private final BranchRepository branchRepository;
     private final ProductRepository productRepository;
     private final ProductHistoryRepository productHistoryRepository;
 
     /**
      * Импорт посылок из Китая.
+     * CN-файл общий для всех филиалов — проверка по филиалу не нужна ни для MANAGER, ни для SUPER_ADMIN.
      *
      * @param file          .xlsx файл
-     * @param currentUserId UUID текущего пользователя (для проверки прав MANAGER)
-     * @param isManager     true если роль MANAGER (иначе SUPER_ADMIN — без ограничений по филиалу)
+     * @param currentUserId не используется (оставлен для единообразия сигнатуры)
+     * @param isManager     не используется (CN-файл общий)
      */
     @Transactional
     public ImportResultResponse importFromChina(MultipartFile file,
@@ -58,20 +56,12 @@ public class ChinaImportService {
             throw new AppException("IMPORT_ERROR", HttpStatus.BAD_REQUEST, "Не удалось прочитать файл Excel");
         }
 
-        // Если MANAGER — проверяем что он не импортирует чужих клиентов.
-        // Для SUPER_ADMIN эту проверку пропускаем.
-        UserEntity currentUser = null;
-        if (isManager) {
-            currentUser = userRepository.findById(currentUserId)
-                    .orElseThrow(() -> new AppException("USER_NOT_FOUND", HttpStatus.NOT_FOUND, "Пользователь не найден"));
-        }
-
         int imported = 0;
         List<ImportErrorDto> errors = new ArrayList<>();
 
         for (ExcelImportParser.ChinaRow row : rows) {
             try {
-                processChinaRow(row, currentUser, isManager);
+                processChinaRow(row);
                 imported++;
             } catch (AppException ex) {
                 errors.add(new ImportErrorDto(row.rowNumber(), ex.getErrorCode(), ex.getMessage()));
@@ -86,17 +76,7 @@ public class ChinaImportService {
         return new ImportResultResponse(imported, errors);
     }
 
-    /**
-     * Обрабатывает одну строку из файла.
-     * Намеренно НЕ помечена @Transactional — она выполняется в контексте родительской транзакции.
-     * При ошибке бросаем AppException, а caller её ловит и добавляет в errors[].
-     * <p>
-     * Почему не REQUIRES_NEW? Потому что для CN-импорта нам не нужны частичные откаты —
-     * мы ловим исключение ДО вызова save, так что транзакция остаётся чистой.
-     */
-    private void processChinaRow(ExcelImportParser.ChinaRow row,
-                                 UserEntity currentUser,
-                                 boolean isManager) {
+    private void processChinaRow(ExcelImportParser.ChinaRow row) {
         UserEntity targetUser = userRepository.findByPersonalCode(row.personalCode())
                 .orElseThrow(() -> new AppException(
                         "USER_NOT_FOUND",
@@ -104,30 +84,13 @@ public class ChinaImportService {
                         "personalCode " + row.personalCode() + " не найден"
                 ));
 
-        // Проверка прав MANAGER: он может импортировать только клиентов своего филиала
-        if (isManager && currentUser != null) {
-            validateManagerBranchAccess(currentUser, targetUser.getBranch());
-        }
-
-        // Создаём Product
         ProductEntity product = new ProductEntity();
         product.setHatch(row.hatch());
         product.setUser(targetUser);
         product.setStatus(ProductStatus.IN_CHINA);
         productRepository.save(product);
 
-        // Логируем создание в истории
         logProductHistory(product, ProductStatus.IN_CHINA);
-    }
-
-    private void validateManagerBranchAccess(UserEntity manager, BranchEntity targetBranch) {
-        if (manager.getBranch() == null) {
-            throw new AppException("FORBIDDEN", HttpStatus.FORBIDDEN, "Менеджер не привязан к филиалу");
-        }
-        if (targetBranch == null || !manager.getBranch().getId().equals(targetBranch.getId())) {
-            throw new AppException("FORBIDDEN", HttpStatus.FORBIDDEN,
-                    "Менеджер может импортировать только клиентов своего филиала");
-        }
     }
 
     private void logProductHistory(ProductEntity product, ProductStatus status) {

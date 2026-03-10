@@ -1,5 +1,6 @@
 package com.cargoapp.backend.imports.parser;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
@@ -14,6 +15,7 @@ import java.util.List;
 /**
  * Парсер Excel-файлов для двух форматов импорта.
  */
+@Slf4j
 @Component
 public class ExcelImportParser {
 
@@ -118,10 +120,13 @@ public class ExcelImportParser {
                                 weight,
                                 price
                         ));
+                    } else {
+                        // Блок невалидный — логируем чтобы было видно в логах сервера.
+                        // Причины: пустой weight/price (менеджер не заполнил) или нет ни одного hatch.
+                        log.warn("KG parser: invalid block skipped at row={}, personalCode={}, " +
+                                        "hatches={}, weight={}, price={}",
+                                rowNum, personalCode.trim(), blockHatches.size(), weightStr, priceStr);
                     }
-                    // Если weight/price null или hatches пустой — блок невалидный, пропускаем.
-                    // Сервис в этом случае ничего не получит и ошибку не залогирует —
-                    // можно доработать если нужно отдавать ошибки на уровне парсера.
                 }
             }
         }
@@ -136,7 +141,12 @@ public class ExcelImportParser {
         if (cell == null) return "";
 
         // POI может хранить числа как NUMERIC, а personalCode как AN0001 — как STRING
-        if (cell.getCellType() == CellType.NUMERIC) {
+        // Если ячейка содержит формулу — вычисляем её кэшированное значение
+        CellType effectiveType = cell.getCellType() == CellType.FORMULA
+                ? cell.getCachedFormulaResultType()
+                : cell.getCellType();
+
+        if (effectiveType == CellType.NUMERIC) {
             // Форматируем без дробной части если это целое
             double val = cell.getNumericCellValue();
             if (val == Math.floor(val)) {
@@ -145,7 +155,7 @@ public class ExcelImportParser {
             return String.valueOf(val);
         }
 
-        if (cell.getCellType() == CellType.STRING) {
+        if (effectiveType == CellType.STRING) {
             return cell.getStringCellValue();
         }
 
