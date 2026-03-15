@@ -1,10 +1,13 @@
 package com.cargoapp.backend.orders.service;
 
+import com.cargoapp.backend.common.component.BranchResolver;
+import com.cargoapp.backend.common.dto.CountResponse;
 import com.cargoapp.backend.common.dto.PagedResponse;
 import com.cargoapp.backend.common.exception.AppException;
 import com.cargoapp.backend.orders.dto.OrderAdminResponse;
 import com.cargoapp.backend.orders.dto.OrderDetailResponse;
 import com.cargoapp.backend.orders.dto.OrderResponse;
+import com.cargoapp.backend.orders.dto.RevenueResponse;
 import com.cargoapp.backend.orders.entity.OrderEntity;
 import com.cargoapp.backend.orders.entity.OrderStatus;
 import com.cargoapp.backend.orders.mapper.OrderMapper;
@@ -18,6 +21,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -28,6 +34,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final ProductService productService;
+    private final BranchResolver branchResolver;
 
     public PagedResponse<OrderResponse> getMyOrders(UUID userId, String status, int page, int pageSize) {
         var pageable = PageRequest.of(page - 1, pageSize, Sort.by("createdAt").descending());
@@ -49,6 +56,30 @@ public class OrderService {
         var products = productService.getProductsByOrderId(orderId);
 
         return orderMapper.toOrderDetailResponse(order, products);
+    }
+
+    public CountResponse getOrderStats(UUID currentUserId, UUID branchId) {
+        UUID effectiveBranchId = branchResolver.resolve(currentUserId, branchId);
+        long count = effectiveBranchId != null
+                ? orderRepository.countPendingPickupByBranch(effectiveBranchId)
+                : orderRepository.countPendingPickup();
+        return new CountResponse(count);
+    }
+
+    public RevenueResponse getRevenue(UUID currentUserId, UUID branchId, int year, int month) {
+        UUID effectiveBranchId = branchResolver.resolve(currentUserId, branchId);
+        LocalDateTime from = LocalDate.of(year, month, 1).atStartOfDay();
+        LocalDateTime to = from.plusMonths(1);
+
+        Object[] raw = effectiveBranchId != null
+                ? orderRepository.getRevenueByBranch(effectiveBranchId, from, to)
+                : orderRepository.getRevenue(from, to);
+
+        Object[] row = raw[0] instanceof Object[] ? (Object[]) raw[0] : raw;
+
+        BigDecimal revenue = row[0] != null ? (BigDecimal) row[0] : BigDecimal.ZERO;
+        long ordersCount = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+        return new RevenueResponse(revenue, ordersCount);
     }
 
     private OrderStatus parseOrderStatus(String status) {

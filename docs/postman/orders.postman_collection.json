@@ -62,6 +62,40 @@
               ]
             }
           }
+        },
+        {
+          "name": "GET /admin/orders/stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "{{adminCookie}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/admin/orders/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "orders", "stats"],
+              "query": [
+                { "key": "branchId", "value": "{{branchId}}", "disabled": true }
+              ]
+            },
+            "description": "Кол-во заказов PENDING_PICKUP. MANAGER — свой филиал. SUPER_ADMIN без branchId — всё приложение."
+          }
+        },
+        {
+          "name": "GET /admin/orders/revenue",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "{{adminCookie}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/admin/orders/revenue",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "orders", "revenue"],
+              "query": [
+                { "key": "branchId", "value": "{{branchId}}", "disabled": true },
+                { "key": "year", "value": "2026", "disabled": true },
+                { "key": "month", "value": "3", "disabled": true }
+              ]
+            },
+            "description": "Выручка за месяц по доставленным заказам. По умолчанию — текущий месяц. MANAGER — свой филиал."
+          }
         }
       ]
     }
