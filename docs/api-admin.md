@@ -133,9 +133,24 @@ Errors: 404 BRANCH_NOT_FOUND
 
 ### GET /admin/users
 Query: `prefix`, `code`, `branchId`, `role`, `page`, `pageSize`
+
+> MANAGER всегда видит только пользователей своего филиала (параметр `branchId` игнорируется).
+> SUPER_ADMIN без `branchId` — все пользователи; с `branchId` — конкретный филиал.
+
 ```json
 // Response 200
 { "items": [User], "page": 1, "pageSize": 20, "total": 123 }
+```
+
+### GET /admin/users/stats
+Query: `branchId` (опционально, только для SUPER_ADMIN)
+
+> MANAGER всегда получает статистику по своему филиалу.
+> SUPER_ADMIN без `branchId` — по всему приложению; с `branchId` — по конкретному филиалу.
+
+```json
+// Response 200
+{ "total": 312, "newThisMonth": 24 }
 ```
 
 ### GET /admin/users/{userId} → User
@@ -158,6 +173,41 @@ Errors: 404 USER_NOT_FOUND
 ```json
 // Response 200
 { "items": [Order], "page": 1, "pageSize": 20, "total": 5 }
+```
+
+---
+
+## Заказы — `/admin/orders` (MANAGER + SUPER_ADMIN)
+
+### GET /admin/orders/stats
+Query: `branchId` (опционально, только для SUPER_ADMIN)
+Количество заказов со статусом `PENDING_PICKUP`.
+> MANAGER — только свой филиал. SUPER_ADMIN без `branchId` — всё приложение.
+```json
+// Response 200
+{ "count": 15 }
+```
+
+### GET /admin/orders/revenue
+Query: `branchId` (опционально), `year` (опционально), `month` (опционально)
+Выручка по доставленным заказам за указанный месяц. По умолчанию — текущий месяц.
+> MANAGER — только свой филиал. SUPER_ADMIN без `branchId` — всё приложение.
+```json
+// Response 200
+{ "revenue": 125000.00, "ordersCount": 42 }
+```
+
+---
+
+## Товары — `/admin/products` (MANAGER + SUPER_ADMIN)
+
+### GET /admin/products/stats
+Query: `branchId` (опционально, только для SUPER_ADMIN)
+Количество товаров со статусом `ON_THE_WAY`.
+> MANAGER — только свой филиал. SUPER_ADMIN без `branchId` — всё приложение.
+```json
+// Response 200
+{ "count": 230 }
 ```
 
 ---

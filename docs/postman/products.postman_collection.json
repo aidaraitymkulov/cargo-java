@@ -86,6 +86,22 @@
               ]
             }
           }
+        },
+        {
+          "name": "GET /admin/products/stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "{{adminCookie}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/admin/products/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "products", "stats"],
+              "query": [
+                { "key": "branchId", "value": "{{branchId}}", "disabled": true }
+              ]
+            },
+            "description": "Кол-во товаров ON_THE_WAY. MANAGER — свой филиал. SUPER_ADMIN без branchId — всё приложение."
+          }
         }
       ]
     }

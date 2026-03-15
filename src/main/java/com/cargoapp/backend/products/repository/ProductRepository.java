@@ -39,4 +39,9 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
             ProductStatus excludedStatus
     );
 
+    @Query("SELECT COUNT(p) FROM ProductEntity p WHERE p.user.branch.id = :branchId AND p.status = 'ON_THE_WAY'")
+    long countOnTheWayByBranch(@Param("branchId") UUID branchId);
+
+    @Query("SELECT COUNT(p) FROM ProductEntity p WHERE p.status = 'ON_THE_WAY'")
+    long countOnTheWay();
 }

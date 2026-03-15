@@ -3,6 +3,7 @@ package com.cargoapp.backend.users.service;
 import com.cargoapp.backend.auth.repository.RefreshSessionRepository;
 import com.cargoapp.backend.branches.entity.BranchEntity;
 import com.cargoapp.backend.branches.repository.BranchRepository;
+import com.cargoapp.backend.common.component.BranchResolver;
 import com.cargoapp.backend.common.dto.PagedResponse;
 import com.cargoapp.backend.common.exception.AppException;
 import com.cargoapp.backend.users.dto.*;
@@ -40,6 +41,7 @@ public class UserService {
     private final RefreshSessionRepository refreshSessionRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final BranchResolver branchResolver;
 
     public UserResponse getMe(UUID userId) {
         return userMapper.toUserResponse(findUserById(userId));
@@ -142,9 +144,10 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public PagedResponse<UserResponse> getUsers(String prefix, String code, UUID branchId, String role, int page, int pageSize) {
+    public PagedResponse<UserResponse> getUsers(UUID currentUserId, String prefix, String code, UUID branchId, String role, int page, int pageSize) {
+        UUID effectiveBranchId = branchResolver.resolve(currentUserId, branchId);
         var pageable = PageRequest.of(page - 1, pageSize, Sort.by("createdAt").descending());
-        var spec = UserSpecification.filter(prefix, code, branchId, role);
+        var spec = UserSpecification.filter(prefix, code, effectiveBranchId, role);
         Page<UserEntity> result = userRepository.findAll(spec, pageable);
 
         List<UserResponse> items = result.getContent().stream()
@@ -152,6 +155,26 @@ public class UserService {
                 .toList();
 
         return new PagedResponse<>(items, page, pageSize, result.getTotalElements());
+    }
+
+    public UserStatsResponse getUserStats(UUID currentUserId, UUID branchId) {
+        UUID effectiveBranchId = branchResolver.resolve(currentUserId, branchId);
+
+        LocalDateTime monthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime monthEnd = monthStart.plusMonths(1);
+
+        long total;
+        long newThisMonth;
+
+        if (effectiveBranchId != null) {
+            total = userRepository.countUsersByBranch(effectiveBranchId);
+            newThisMonth = userRepository.countNewUsersByBranch(effectiveBranchId, monthStart, monthEnd);
+        } else {
+            total = userRepository.countAllUsers();
+            newThisMonth = userRepository.countNewUsers(monthStart, monthEnd);
+        }
+
+        return new UserStatsResponse(total, newThisMonth);
     }
 
     public UserResponse getUserById(UUID userId) {

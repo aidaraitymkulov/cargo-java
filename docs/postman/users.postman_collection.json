@@ -128,7 +128,22 @@
                 { "key": "role", "value": "USER", "disabled": true }
               ]
             },
-            "description": "Список пользователей с фильтрами. MANAGER + SUPER_ADMIN."
+            "description": "Список пользователей с фильтрами. MANAGER всегда видит только свой филиал. SUPER_ADMIN без branchId — все пользователи."
+          }
+        },
+        {
+          "name": "GET /admin/users/stats",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "stats"],
+              "query": [
+                { "key": "branchId", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Статистика пользователей: total и newThisMonth. MANAGER — только свой филиал. SUPER_ADMIN без branchId — по всему приложению."
           }
         },
         {
