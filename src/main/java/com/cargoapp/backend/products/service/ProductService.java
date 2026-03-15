@@ -1,5 +1,7 @@
 package com.cargoapp.backend.products.service;
 
+import com.cargoapp.backend.common.component.BranchResolver;
+import com.cargoapp.backend.common.dto.CountResponse;
 import com.cargoapp.backend.common.dto.PagedResponse;
 import com.cargoapp.backend.common.exception.AppException;
 import com.cargoapp.backend.products.dto.*;
@@ -26,6 +28,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductHistoryRepository productHistoryRepository;
     private final ProductMapper productMapper;
+    private final BranchResolver branchResolver;
 
     public PagedResponse<ProductResponse> getMyProducts(UUID userId, String status, int page, int pageSize) {
         var pageable = PageRequest.of(page - 1, pageSize, Sort.by("createdAt").descending());
@@ -72,6 +75,14 @@ public class ProductService {
 
         // TODO: заполнить когда будет orders домен
         return new ItemsSummaryResponse(counts, 0L, 0L, lastUpdatedAt);
+    }
+
+    public CountResponse getProductStats(UUID currentUserId, UUID branchId) {
+        UUID effectiveBranchId = branchResolver.resolve(currentUserId, branchId);
+        long count = effectiveBranchId != null
+                ? productRepository.countOnTheWayByBranch(effectiveBranchId)
+                : productRepository.countOnTheWay();
+        return new CountResponse(count);
     }
 
     public List<ProductResponse> getProductsByOrderId(UUID orderId) {

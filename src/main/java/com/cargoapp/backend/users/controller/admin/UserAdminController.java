@@ -1,7 +1,9 @@
 package com.cargoapp.backend.users.controller.admin;
 
+import com.cargoapp.backend.common.annotation.CurrentUserId;
 import com.cargoapp.backend.common.dto.PagedResponse;
 import com.cargoapp.backend.users.dto.UserResponse;
+import com.cargoapp.backend.users.dto.UserStatsResponse;
 import com.cargoapp.backend.users.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,7 @@ public class UserAdminController {
 
     @GetMapping
     public PagedResponse<UserResponse> getUsers(
+            @CurrentUserId UUID currentUserId,
             @RequestParam(required = false) String prefix,
             @RequestParam(required = false) String code,
             @RequestParam(required = false) UUID branchId,
@@ -27,7 +30,15 @@ public class UserAdminController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int pageSize
     ) {
-        return userService.getUsers(prefix, code, branchId, role, page, pageSize);
+        return userService.getUsers(currentUserId, prefix, code, branchId, role, page, pageSize);
+    }
+
+    @GetMapping("/stats")
+    public UserStatsResponse getUserStats(
+            @CurrentUserId UUID currentUserId,
+            @RequestParam(required = false) UUID branchId
+    ) {
+        return userService.getUserStats(currentUserId, branchId);
     }
 
     @GetMapping("/{userId}")
