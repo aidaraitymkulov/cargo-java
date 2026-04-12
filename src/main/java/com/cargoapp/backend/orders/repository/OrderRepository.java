@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -41,4 +42,10 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
 
     @Query("SELECT SUM(o.price), COUNT(o) FROM OrderEntity o WHERE o.status = 'DELIVERED' AND o.updatedAt >= :from AND o.updatedAt < :to")
     Object[] getRevenue(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query(value = "SELECT DATE(updated_at) as date, COUNT(*) as count FROM orders WHERE status = 'DELIVERED' AND branch_id = :branchId AND updated_at >= :from AND updated_at < :to GROUP BY DATE(updated_at) ORDER BY DATE(updated_at)", nativeQuery = true)
+    List<Object[]> countDeliveredByDayAndBranch(@Param("branchId") UUID branchId, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query(value = "SELECT DATE(updated_at) as date, COUNT(*) as count FROM orders WHERE status = 'DELIVERED' AND updated_at >= :from AND updated_at < :to GROUP BY DATE(updated_at) ORDER BY DATE(updated_at)", nativeQuery = true)
+    List<Object[]> countDeliveredByDay(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }

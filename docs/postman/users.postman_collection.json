@@ -15,10 +15,6 @@
     {
       "key": "userId",
       "value": ""
-    },
-    {
-      "key": "managerId",
-      "value": ""
     }
   ],
   "item": [
@@ -212,64 +208,5 @@
         }
       ]
     },
-    {
-      "name": "Admin — Managers",
-      "item": [
-        {
-          "name": "POST /admin/managers",
-          "request": {
-            "method": "POST",
-            "url": "{{baseUrl}}/admin/managers",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"login\": \"manager@adesexpress.com\",\n  \"password\": \"Manager123\",\n  \"firstName\": \"Айгуль\",\n  \"lastName\": \"Сатыбалдиева\",\n  \"phone\": \"+996700000010\",\n  \"branchId\": \"{{branchId}}\",\n  \"role\": \"MANAGER\"\n}"
-            },
-            "description": "Создать менеджера или супер-админа. SUPER_ADMIN."
-          }
-        },
-        {
-          "name": "GET /admin/managers",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/admin/managers?page=1&pageSize=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "managers"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "pageSize", "value": "20" }
-              ]
-            },
-            "description": "Список менеджеров и супер-админов. SUPER_ADMIN."
-          }
-        },
-        {
-          "name": "PATCH /admin/managers/:id",
-          "request": {
-            "method": "PATCH",
-            "url": "{{baseUrl}}/admin/managers/{{managerId}}",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"firstName\": \"Айгуль\",\n  \"lastName\": \"Омурова\",\n  \"phone\": \"+996700000011\"\n}"
-            },
-            "description": "Обновить данные менеджера. Все поля опциональны. SUPER_ADMIN."
-          }
-        },
-        {
-          "name": "DELETE /admin/managers/:id",
-          "request": {
-            "method": "DELETE",
-            "url": "{{baseUrl}}/admin/managers/{{managerId}}",
-            "description": "Удалить менеджера. Нельзя удалить себя. SUPER_ADMIN."
-          }
-        }
-      ]
-    }
   ]
 }

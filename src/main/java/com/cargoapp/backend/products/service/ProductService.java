@@ -78,7 +78,7 @@ public class ProductService {
     }
 
     public CountResponse getProductStats(UUID currentUserId, UUID branchId) {
-        UUID effectiveBranchId = branchResolver.resolve(currentUserId, branchId);
+        UUID effectiveBranchId = branchResolver.resolveForManager(currentUserId, branchId);
         long count = effectiveBranchId != null
                 ? productRepository.countOnTheWayByBranch(effectiveBranchId)
                 : productRepository.countOnTheWay();
