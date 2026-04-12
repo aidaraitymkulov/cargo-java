@@ -12,12 +12,17 @@ import com.cargoapp.backend.auth.repository.RefreshSessionRepository;
 import com.cargoapp.backend.branches.entity.BranchEntity;
 import com.cargoapp.backend.branches.repository.BranchRepository;
 import com.cargoapp.backend.common.exception.AppException;
+import com.cargoapp.backend.managers.dto.ManagerResponse;
+import com.cargoapp.backend.managers.entity.ManagerEntity;
+import com.cargoapp.backend.managers.entity.ManagerRefreshSessionEntity;
+import com.cargoapp.backend.managers.mapper.ManagerMapper;
+import com.cargoapp.backend.managers.repository.ManagerRefreshSessionRepository;
+import com.cargoapp.backend.managers.repository.ManagerRepository;
 import com.cargoapp.backend.users.entity.UserEntity;
 import com.cargoapp.backend.users.entity.UserPersonalCodeEntity;
 import com.cargoapp.backend.users.entity.UserStatus;
 import com.cargoapp.backend.users.repository.UserPersonalCodeRepository;
 import com.cargoapp.backend.users.repository.UserRepository;
-import com.cargoapp.backend.users.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -34,16 +39,22 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final UserRoleRepository userRoleRepository;
     private final BranchRepository branchRepository;
     private final UserPersonalCodeRepository userPersonalCodeRepository;
     private final ConfirmationRepository confirmationRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshSessionRepository refreshSessionRepository;
+    private final ManagerRepository managerRepository;
+    private final ManagerRefreshSessionRepository managerRefreshSessionRepository;
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
     private final AuthMapper authMapper;
+    private final ManagerMapper managerMapper;
     private final ApplicationEventPublisher eventPublisher;
+
+    // =============================================
+    // REGISTER (только мобильные пользователи)
+    // =============================================
 
     @Transactional
     public void register(RegisterRequest request) {
@@ -57,9 +68,6 @@ public class AuthService {
         BranchEntity branch = branchRepository.findByIdForUpdate(request.branchId())
                 .orElseThrow(() -> new AppException("BRANCH_NOT_FOUND", HttpStatus.NOT_FOUND, "Филиал не найден"));
 
-        var role = userRoleRepository.findByRoleName("USER")
-                .orElseThrow(() -> new AppException("INTERNAL_ERROR", HttpStatus.INTERNAL_SERVER_ERROR, "Роль не найдена"));
-
         String personalCode = String.format("%s%04d", branch.getPersonalCodePrefix(), branch.getNextSequence());
 
         UserEntity user = new UserEntity();
@@ -72,7 +80,6 @@ public class AuthService {
         user.setDateOfBirth(request.dateOfBirth());
         user.setPersonalCode(personalCode);
         user.setBranch(branch);
-        user.setRole(role);
         userRepository.save(user);
 
         UserPersonalCodeEntity personalCodeEntry = new UserPersonalCodeEntity();
@@ -98,8 +105,12 @@ public class AuthService {
         eventPublisher.publishEvent(new ConfirmationEmailEvent(user.getEmail(), code));
     }
 
+    // =============================================
+    // LOGIN — мобильный клиент (X-Client-Type: mobile)
+    // =============================================
+
     @Transactional
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse loginUser(LoginRequest request) {
         UserEntity user = userRepository.findByLogin(request.login())
                 .orElseThrow(() -> new AppException("INVALID_CREDENTIALS", HttpStatus.UNAUTHORIZED, "Неверный логин или пароль"));
 
@@ -127,20 +138,45 @@ public class AuthService {
         RefreshSessionEntity session = new RefreshSessionEntity();
         session.setUser(user);
         session.setJti(jti);
-        session.setExpiresAt(LocalDateTime.now().plusSeconds(
-                jwtProperties.getRefreshExpirationMs() / 1000
-        ));
+        session.setExpiresAt(LocalDateTime.now().plusSeconds(jwtProperties.getRefreshExpirationMs() / 1000));
         refreshSessionRepository.save(session);
 
-        String accessToken = jwtService.generateAccessToken(
-                user.getId(),
-                user.getRole().getRoleName(),
-                jti
-        );
+        String accessToken = jwtService.generateUserAccessToken(user.getId(), jti);
         String refreshToken = jwtService.generateRefreshToken(jti);
 
         return authMapper.toAuthResponse(user, accessToken, refreshToken);
     }
+
+    // =============================================
+    // LOGIN — веб-клиент (X-Client-Type: web)
+    // =============================================
+
+    @Transactional
+    public ManagerLoginResult loginManager(LoginRequest request) {
+        ManagerEntity manager = managerRepository.findByLogin(request.login())
+                .orElseThrow(() -> new AppException("INVALID_CREDENTIALS", HttpStatus.UNAUTHORIZED, "Неверный логин или пароль"));
+
+        if (!passwordEncoder.matches(request.password(), manager.getPasswordHash())) {
+            throw new AppException("INVALID_CREDENTIALS", HttpStatus.UNAUTHORIZED, "Неверный логин или пароль");
+        }
+
+        String jti = UUID.randomUUID().toString();
+
+        ManagerRefreshSessionEntity session = new ManagerRefreshSessionEntity();
+        session.setManager(manager);
+        session.setJti(jti);
+        session.setExpiresAt(LocalDateTime.now().plusSeconds(jwtProperties.getRefreshExpirationMs() / 1000));
+        managerRefreshSessionRepository.save(session);
+
+        String accessToken = jwtService.generateManagerAccessToken(manager.getId(), manager.getRole(), jti);
+        String refreshToken = jwtService.generateRefreshToken(jti);
+
+        return new ManagerLoginResult(accessToken, refreshToken, managerMapper.toManagerResponse(manager));
+    }
+
+    // =============================================
+    // LOGOUT
+    // =============================================
 
     @Transactional
     public void logout(String refreshToken) {
@@ -148,11 +184,18 @@ public class AuthService {
             throw new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Недействительный токен");
         }
         String jti = jwtService.extractRefreshClaims(refreshToken).getId();
+
+        // Пробуем отозвать в обоих хранилищах — один из запросов найдёт запись
         refreshSessionRepository.revokeByJti(jti, LocalDateTime.now());
+        managerRefreshSessionRepository.revokeByJti(jti, LocalDateTime.now());
     }
 
+    // =============================================
+    // REFRESH TOKEN
+    // =============================================
+
     @Transactional
-    public TokenPairDto refreshToken(String refreshToken) {
+    public TokenPairDto refreshUserToken(String refreshToken) {
         if (!jwtService.validateRefreshToken(refreshToken)) {
             throw new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Недействительный токен");
         }
@@ -170,16 +213,46 @@ public class AuthService {
         RefreshSessionEntity newSession = new RefreshSessionEntity();
         newSession.setUser(user);
         newSession.setJti(newJti);
-        newSession.setExpiresAt(LocalDateTime.now().plusSeconds(
-                jwtProperties.getRefreshExpirationMs() / 1000
-        ));
+        newSession.setExpiresAt(LocalDateTime.now().plusSeconds(jwtProperties.getRefreshExpirationMs() / 1000));
         refreshSessionRepository.save(newSession);
 
-        String accessToken = jwtService.generateAccessToken(user.getId(), user.getRole().getRoleName(), newJti);
+        String newAccessToken = jwtService.generateUserAccessToken(user.getId(), newJti);
         String newRefreshToken = jwtService.generateRefreshToken(newJti);
 
-        return new TokenPairDto(accessToken, newRefreshToken);
+        return new TokenPairDto(newAccessToken, newRefreshToken);
     }
+
+    @Transactional
+    public TokenPairDto refreshManagerToken(String refreshToken) {
+        if (!jwtService.validateRefreshToken(refreshToken)) {
+            throw new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Недействительный токен");
+        }
+
+        String jti = jwtService.extractRefreshClaims(refreshToken).getId();
+
+        ManagerRefreshSessionEntity oldSession = managerRefreshSessionRepository.findByJtiAndRevokedAtIsNull(jti)
+                .orElseThrow(() -> new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Сессия не найдена или отозвана"));
+
+        managerRefreshSessionRepository.revokeByJti(jti, LocalDateTime.now());
+
+        ManagerEntity manager = oldSession.getManager();
+        String newJti = UUID.randomUUID().toString();
+
+        ManagerRefreshSessionEntity newSession = new ManagerRefreshSessionEntity();
+        newSession.setManager(manager);
+        newSession.setJti(newJti);
+        newSession.setExpiresAt(LocalDateTime.now().plusSeconds(jwtProperties.getRefreshExpirationMs() / 1000));
+        managerRefreshSessionRepository.save(newSession);
+
+        String newAccessToken = jwtService.generateManagerAccessToken(manager.getId(), manager.getRole(), newJti);
+        String newRefreshToken = jwtService.generateRefreshToken(newJti);
+
+        return new TokenPairDto(newAccessToken, newRefreshToken);
+    }
+
+    // =============================================
+    // CONFIRM / RESEND (только мобильные пользователи)
+    // =============================================
 
     @Transactional
     public void confirm(ConfirmRequest request) {
@@ -229,4 +302,14 @@ public class AuthService {
         confirmationRepository.save(confirmation);
         eventPublisher.publishEvent(new ConfirmationEmailEvent(user.getEmail(), newCode));
     }
+
+    // =============================================
+    // Внутренний record для результата loginManager
+    // =============================================
+
+    public record ManagerLoginResult(
+            String accessToken,
+            String refreshToken,
+            ManagerResponse manager
+    ) {}
 }

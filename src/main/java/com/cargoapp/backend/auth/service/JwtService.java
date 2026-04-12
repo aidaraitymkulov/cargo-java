@@ -25,15 +25,44 @@ public class JwtService {
         this.refreshKey = Keys.hmacShaKeyFor(jwtProperties.getRefreshSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateAccessToken(UUID userId, String role, String jti) {
+    /**
+     * Генерирует access-токен для мобильного пользователя (user).
+     * claim type = "user", role не включается.
+     */
+    public String generateUserAccessToken(UUID userId, String jti) {
         return Jwts.builder()
                 .subject(userId.toString())
+                .claim("type", "user")
+                .id(jti)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + jwtProperties.getAccessExpirationMs()))
+                .signWith(accessKey)
+                .compact();
+    }
+
+    /**
+     * Генерирует access-токен для менеджера (web).
+     * claim type = "manager", claim role = MANAGER | SUPER_ADMIN.
+     */
+    public String generateManagerAccessToken(UUID managerId, String role, String jti) {
+        return Jwts.builder()
+                .subject(managerId.toString())
+                .claim("type", "manager")
                 .claim("role", role)
                 .id(jti)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtProperties.getAccessExpirationMs()))
                 .signWith(accessKey)
                 .compact();
+    }
+
+    /**
+     * @deprecated Используй generateUserAccessToken или generateManagerAccessToken.
+     * Оставлен для обратной совместимости на период рефакторинга.
+     */
+    @Deprecated
+    public String generateAccessToken(UUID userId, String role, String jti) {
+        return generateManagerAccessToken(userId, role, jti);
     }
 
     public String generateRefreshToken(String jti) {

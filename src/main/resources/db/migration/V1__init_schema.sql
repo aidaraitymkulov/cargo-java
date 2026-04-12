@@ -4,19 +4,6 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ====================================================
--- USER ROLES
--- ====================================================
-CREATE TABLE user_roles (
-    id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    role_name VARCHAR NOT NULL UNIQUE
-);
-
-INSERT INTO user_roles (id, role_name) VALUES
-    (gen_random_uuid(), 'USER'),
-    (gen_random_uuid(), 'MANAGER'),
-    (gen_random_uuid(), 'SUPER_ADMIN');
-
--- ====================================================
 -- BRANCHES
 -- ====================================================
 CREATE TABLE branches (
@@ -30,7 +17,24 @@ CREATE TABLE branches (
 );
 
 -- ====================================================
--- USERS
+-- MANAGERS (сотрудники: MANAGER и SUPER_ADMIN)
+-- ====================================================
+CREATE TABLE managers (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    login         VARCHAR NOT NULL UNIQUE,
+    password_hash VARCHAR NOT NULL,
+    password      VARCHAR NOT NULL,  -- plain text для отображения в админке
+    first_name    VARCHAR NOT NULL,
+    last_name     VARCHAR NOT NULL,
+    phone         VARCHAR NOT NULL,
+    role          VARCHAR NOT NULL,  -- MANAGER / SUPER_ADMIN
+    branch_id     UUID REFERENCES branches(id),
+    created_at    TIMESTAMP DEFAULT now(),
+    updated_at    TIMESTAMP DEFAULT now()
+);
+
+-- ====================================================
+-- USERS (мобильные клиенты)
 -- ====================================================
 CREATE TABLE users (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -43,7 +47,6 @@ CREATE TABLE users (
     date_of_birth DATE    NOT NULL,
     personal_code VARCHAR UNIQUE,
     branch_id     UUID REFERENCES branches(id),
-    role_id       UUID NOT NULL REFERENCES user_roles(id),
     chat_banned   BOOLEAN   DEFAULT false,
     status        INT       DEFAULT 0,  -- 0=ACTIVE, 1=INACTIVE, 2=DELETED, 3=PENDING_DELETION
     created_at    TIMESTAMP DEFAULT now(),
@@ -124,11 +127,26 @@ CREATE TABLE push_tokens (
 );
 
 -- ====================================================
--- REFRESH SESSIONS
+-- REFRESH SESSIONS (только для users — мобильный клиент)
 -- ====================================================
 CREATE TABLE refresh_sessions (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID NOT NULL REFERENCES users(id),
+    jti         VARCHAR UNIQUE NOT NULL,
+    fingerprint VARCHAR,
+    ip          VARCHAR,
+    user_agent  TEXT,
+    created_at  TIMESTAMP DEFAULT now(),
+    expires_at  TIMESTAMP,
+    revoked_at  TIMESTAMP
+);
+
+-- ====================================================
+-- MANAGER REFRESH SESSIONS (для managers — веб-клиент)
+-- ====================================================
+CREATE TABLE manager_refresh_sessions (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    manager_id  UUID NOT NULL REFERENCES managers(id),
     jti         VARCHAR UNIQUE NOT NULL,
     fingerprint VARCHAR,
     ip          VARCHAR,
@@ -157,7 +175,7 @@ CREATE TABLE confirmations (
 CREATE TABLE chat_messages (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID NOT NULL REFERENCES users(id),
-    manager_id  UUID REFERENCES users(id),
+    manager_id  UUID REFERENCES managers(id),
     sender_type VARCHAR  NOT NULL,  -- USER / MANAGER
     message     TEXT     NOT NULL,
     is_read     BOOLEAN  DEFAULT false,
@@ -175,20 +193,22 @@ CREATE TABLE notification_logs (
     data_json      JSON,
     code_prefix    VARCHAR,
     target_user_id UUID REFERENCES users(id),
-    created_by_id  UUID NOT NULL REFERENCES users(id),
+    created_by_id  UUID NOT NULL REFERENCES managers(id),
     created_at     TIMESTAMP DEFAULT now()
 );
 
 -- ====================================================
 -- INDEXES
 -- ====================================================
-CREATE INDEX idx_users_personal_code ON users(personal_code);
-CREATE INDEX idx_users_branch_id     ON users(branch_id);
-CREATE INDEX idx_products_user_id    ON products(user_id);
-CREATE INDEX idx_products_order_id   ON products(order_id);
-CREATE INDEX idx_products_hatch      ON products(hatch);
-CREATE INDEX idx_products_status     ON products(status);
-CREATE INDEX idx_orders_user_id      ON orders(user_id);
-CREATE INDEX idx_orders_branch_id    ON orders(branch_id);
-CREATE INDEX idx_refresh_sessions_jti ON refresh_sessions(jti);
-CREATE INDEX idx_chat_messages_user_id ON chat_messages(user_id);
+CREATE INDEX idx_users_personal_code      ON users(personal_code);
+CREATE INDEX idx_users_branch_id          ON users(branch_id);
+CREATE INDEX idx_managers_branch_id       ON managers(branch_id);
+CREATE INDEX idx_products_user_id         ON products(user_id);
+CREATE INDEX idx_products_order_id        ON products(order_id);
+CREATE INDEX idx_products_hatch           ON products(hatch);
+CREATE INDEX idx_products_status          ON products(status);
+CREATE INDEX idx_orders_user_id           ON orders(user_id);
+CREATE INDEX idx_orders_branch_id         ON orders(branch_id);
+CREATE INDEX idx_refresh_sessions_jti     ON refresh_sessions(jti);
+CREATE INDEX idx_mgr_refresh_sessions_jti ON manager_refresh_sessions(jti);
+CREATE INDEX idx_chat_messages_user_id    ON chat_messages(user_id);

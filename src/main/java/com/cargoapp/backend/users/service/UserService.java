@@ -13,7 +13,6 @@ import com.cargoapp.backend.users.entity.UserStatus;
 import com.cargoapp.backend.users.mapper.UserMapper;
 import com.cargoapp.backend.users.repository.UserPersonalCodeRepository;
 import com.cargoapp.backend.users.repository.UserRepository;
-import com.cargoapp.backend.users.repository.UserRoleRepository;
 import com.cargoapp.backend.users.repository.UserSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -35,7 +34,6 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final UserRoleRepository userRoleRepository;
     private final BranchRepository branchRepository;
     private final UserPersonalCodeRepository userPersonalCodeRepository;
     private final RefreshSessionRepository refreshSessionRepository;
@@ -144,10 +142,10 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public PagedResponse<UserResponse> getUsers(UUID currentUserId, String prefix, String code, UUID branchId, String role, int page, int pageSize) {
-        UUID effectiveBranchId = branchResolver.resolve(currentUserId, branchId);
+    public PagedResponse<UserResponse> getUsers(UUID currentManagerId, String prefix, String code, UUID branchId, int page, int pageSize) {
+        UUID effectiveBranchId = branchResolver.resolveForManager(currentManagerId, branchId);
         var pageable = PageRequest.of(page - 1, pageSize, Sort.by("createdAt").descending());
-        var spec = UserSpecification.filter(prefix, code, effectiveBranchId, role);
+        var spec = UserSpecification.filter(prefix, code, effectiveBranchId);
         Page<UserEntity> result = userRepository.findAll(spec, pageable);
 
         List<UserResponse> items = result.getContent().stream()
@@ -157,8 +155,8 @@ public class UserService {
         return new PagedResponse<>(items, page, pageSize, result.getTotalElements());
     }
 
-    public UserStatsResponse getUserStats(UUID currentUserId, UUID branchId) {
-        UUID effectiveBranchId = branchResolver.resolve(currentUserId, branchId);
+    public UserStatsResponse getUserStats(UUID currentManagerId, UUID branchId) {
+        UUID effectiveBranchId = branchResolver.resolveForManager(currentManagerId, branchId);
 
         LocalDateTime monthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
         LocalDateTime monthEnd = monthStart.plusMonths(1);
@@ -200,72 +198,6 @@ public class UserService {
         UserEntity user = findUserById(userId);
         user.setChatBanned(false);
         return userMapper.toUserResponse(userRepository.save(user));
-    }
-
-    @Transactional
-    public UserResponse createManager(CreateManagerRequest request) {
-        if (userRepository.existsByLogin(request.login())) {
-            throw new AppException("CONFLICT", HttpStatus.CONFLICT, "Логин уже занят");
-        }
-
-        var role = userRoleRepository.findByRoleName(request.role())
-                .orElseThrow(() -> new AppException("VALIDATION_ERROR", HttpStatus.BAD_REQUEST, "Недопустимая роль: " + request.role()));
-
-        BranchEntity branch = branchRepository.findById(request.branchId())
-                .orElseThrow(() -> new AppException("BRANCH_NOT_FOUND", HttpStatus.NOT_FOUND, "Филиал не найден"));
-
-        UserEntity manager = new UserEntity();
-        manager.setLogin(request.login());
-        manager.setEmail(request.login());
-        manager.setPasswordHash(passwordEncoder.encode(request.password()));
-        manager.setFirstName(request.firstName());
-        manager.setLastName(request.lastName());
-        manager.setPhone(request.phone());
-        manager.setDateOfBirth(LocalDate.of(1970, 1, 1));
-        manager.setBranch(branch);
-        manager.setRole(role);
-
-        return userMapper.toUserResponse(userRepository.save(manager));
-    }
-
-    public PagedResponse<UserResponse> getManagers(int page, int pageSize) {
-        var pageable = PageRequest.of(page - 1, pageSize, Sort.by("createdAt").descending());
-        var spec = UserSpecification.managerRoles();
-        Page<UserEntity> result = userRepository.findAll(spec, pageable);
-
-        List<UserResponse> items = result.getContent().stream()
-                .map(userMapper::toUserResponse)
-                .toList();
-
-        return new PagedResponse<>(items, page, pageSize, result.getTotalElements());
-    }
-
-    @Transactional
-    public UserResponse updateManager(UUID managerId, UpdateManagerRequest request) {
-        UserEntity manager = findUserById(managerId);
-
-        if (request.firstName() != null) {
-            manager.setFirstName(request.firstName());
-        }
-        if (request.lastName() != null) {
-            manager.setLastName(request.lastName());
-        }
-        if (request.phone() != null) {
-            manager.setPhone(request.phone());
-        }
-
-        return userMapper.toUserResponse(userRepository.save(manager));
-    }
-
-    @Transactional
-    public void deleteManager(UUID managerId, UUID currentUserId) {
-        if (managerId.equals(currentUserId)) {
-            throw new AppException("CONFLICT", HttpStatus.CONFLICT, "Нельзя удалить себя");
-        }
-
-        UserEntity manager = findUserById(managerId);
-        manager.setStatus(UserStatus.DELETED);
-        userRepository.save(manager);
     }
 
     private UserEntity findUserById(UUID userId) {

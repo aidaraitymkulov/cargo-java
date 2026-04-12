@@ -2,7 +2,6 @@ package com.cargoapp.backend.auth.controller;
 
 import com.cargoapp.backend.auth.config.JwtProperties;
 import com.cargoapp.backend.auth.dto.*;
-import com.cargoapp.backend.users.dto.UserResponse;
 import com.cargoapp.backend.auth.service.AuthService;
 import com.cargoapp.backend.common.exception.AppException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,19 +29,25 @@ public class AuthController {
         authService.register(request);
     }
 
+    /**
+     * Единый логин.
+     * X-Client-Type: mobile → ищем в users, возвращаем токены + UserResponse в теле
+     * X-Client-Type: web   → ищем в managers, токены в HttpOnly cookies, в теле только ManagerResponse
+     */
     @PostMapping("/login")
     public Object login(
             @Valid @RequestBody LoginRequest request,
             @RequestHeader(value = "X-Client-Type", required = false) String clientType,
             HttpServletResponse response
     ) {
-        AuthResponse auth = authService.login(request);
-
         if (isWebClient(clientType)) {
-            setTokenCookies(response, auth.accessToken(), auth.refreshToken());
-            return auth.user();
+            AuthService.ManagerLoginResult result = authService.loginManager(request);
+            setTokenCookies(response, result.accessToken(), result.refreshToken());
+            return result.manager();
         }
 
+        // mobile (default)
+        AuthResponse auth = authService.loginUser(request);
         return auth;
     }
 
@@ -68,6 +73,11 @@ public class AuthController {
         }
     }
 
+    /**
+     * Обновление токена.
+     * X-Client-Type: web   → refresh из cookie, ищем в manager_refresh_sessions
+     * X-Client-Type: mobile → refresh из тела, ищем в refresh_sessions
+     */
     @PostMapping("/refresh")
     public Object refresh(
             @RequestHeader(value = "X-Client-Type", required = false) String clientType,
@@ -80,7 +90,7 @@ public class AuthController {
             if (refreshToken == null) {
                 throw new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Refresh токен отсутствует");
             }
-            TokenPairDto tokens = authService.refreshToken(refreshToken);
+            TokenPairDto tokens = authService.refreshManagerToken(refreshToken);
             setTokenCookies(response, tokens.accessToken(), tokens.refreshToken());
             response.setStatus(HttpStatus.NO_CONTENT.value());
             return null;
@@ -89,7 +99,7 @@ public class AuthController {
         if (body == null || body.refreshToken() == null || body.refreshToken().isBlank()) {
             throw new AppException("VALIDATION_ERROR", HttpStatus.BAD_REQUEST, "refreshToken обязателен");
         }
-        return authService.refreshToken(body.refreshToken());
+        return authService.refreshUserToken(body.refreshToken());
     }
 
     @PostMapping("/confirm")
@@ -103,6 +113,10 @@ public class AuthController {
     public void resend(@RequestParam String login) {
         authService.resendConfirmation(login);
     }
+
+    // =============================================
+    // Вспомогательные методы для cookie
+    // =============================================
 
     private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
         response.addHeader("Set-Cookie", buildCookie("accessToken", accessToken,

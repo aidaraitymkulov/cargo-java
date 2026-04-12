@@ -10,11 +10,7 @@ import java.util.UUID;
 
 public class UserSpecification {
 
-    public static Specification<UserEntity> managerRoles() {
-        return (root, query, cb) -> root.get("role").get("roleName").in("MANAGER", "SUPER_ADMIN");
-    }
-
-    public static Specification<UserEntity> filter(String prefix, String code, UUID branchId, String role) {
+    public static Specification<UserEntity> filter(String prefix, String code, UUID branchId) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -28,10 +24,6 @@ public class UserSpecification {
 
             if (branchId != null) {
                 predicates.add(cb.equal(root.get("branch").get("id"), branchId));
-            }
-
-            if (role != null && !role.isBlank()) {
-                predicates.add(cb.equal(root.get("role").get("roleName"), role));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

@@ -2,6 +2,7 @@ package com.cargoapp.backend.orders.controller.admin;
 
 import com.cargoapp.backend.common.annotation.CurrentUserId;
 import com.cargoapp.backend.common.dto.CountResponse;
+import com.cargoapp.backend.orders.dto.DailyCountResponse;
 import com.cargoapp.backend.orders.dto.RevenueResponse;
 import com.cargoapp.backend.orders.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -25,6 +27,14 @@ public class OrderStatsAdminController {
             @RequestParam(required = false) UUID branchId
     ) {
         return orderService.getOrderStats(currentUserId, branchId);
+    }
+
+    @GetMapping("/delivered-daily")
+    public List<DailyCountResponse> getDeliveredDaily(
+            @CurrentUserId UUID currentUserId,
+            @RequestParam(required = false) UUID branchId
+    ) {
+        return orderService.getDeliveredDaily(currentUserId, branchId);
     }
 
     @GetMapping("/revenue")

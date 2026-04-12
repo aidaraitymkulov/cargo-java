@@ -21,7 +21,6 @@ public class UserMapper {
                 user.getPhone(),
                 user.getDateOfBirth(),
                 user.getPersonalCode(),
-                user.getRole().getRoleName(),
                 branchMapper.toBranchResponse(user.getBranch()),
                 user.getStatus().name(),
                 user.getCreatedAt(),
