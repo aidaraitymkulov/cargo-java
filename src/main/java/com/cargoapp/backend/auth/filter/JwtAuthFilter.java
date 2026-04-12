@@ -33,27 +33,44 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (token != null && jwtService.validateAccessToken(token)) {
             Claims claims = jwtService.extractAccessClaims(token);
 
-            String userId = claims.getSubject();
-            String role = claims.get("role", String.class);
+            String subject = claims.getSubject();  // userId или managerId
+            String type = claims.get("type", String.class);
 
-            var authentication = new UsernamePasswordAuthenticationToken(
-                    userId,
-                    null,
-                    List.of(new SimpleGrantedAuthority("ROLE_" + role))
-            );
+            if ("manager".equals(type)) {
+                // Менеджер: выставляем ROLE_ из claim role
+                String role = claims.get("role", String.class);
+                var authentication = new UsernamePasswordAuthenticationToken(
+                        subject,
+                        null,
+                        role != null
+                                ? List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                                : List.of()
+                );
+                SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            } else if ("user".equals(type)) {
+                // Мобильный пользователь: без role, просто authenticated
+                var authentication = new UsernamePasswordAuthenticationToken(
+                        subject,
+                        null,
+                        List.of()  // пустой список — isAuthenticated() = true, hasRole() = false
+                );
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+            // Если type неизвестен — не аутентифицируем
         }
 
         filterChain.doFilter(request, response);
     }
 
     private String extractToken(HttpServletRequest request) {
+        // Сначала проверяем Authorization header (mobile)
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }
 
+        // Затем cookie (web)
         if (request.getCookies() != null) {
             return Arrays.stream(request.getCookies())
                     .filter(c -> "accessToken".equals(c.getName()))

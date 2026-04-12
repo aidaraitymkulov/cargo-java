@@ -1,0 +1,80 @@
+{
+  "info": {
+    "name": "CargoApp — Managers",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "managerId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "GET /admin/me",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/admin/me",
+        "description": "Получить свой профиль (текущий менеджер/супер-админ). MANAGER + SUPER_ADMIN. Auth: cookie accessToken."
+      }
+    },
+    {
+      "name": "GET /admin/managers",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/admin/managers",
+        "description": "Список всех менеджеров (без SUPER_ADMIN). Без пагинации. SUPER_ADMIN."
+      }
+    },
+    {
+      "name": "GET /admin/managers/:id",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/admin/managers/{{managerId}}",
+        "description": "Получить менеджера по ID. SUPER_ADMIN."
+      }
+    },
+    {
+      "name": "POST /admin/managers",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/admin/managers",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"login\": \"manager01\",\n  \"password\": \"Manager123\",\n  \"firstName\": \"Айгуль\",\n  \"lastName\": \"Сатыбалдиева\",\n  \"phone\": \"+996700000010\",\n  \"branchId\": \"{{branchId}}\",\n  \"role\": \"MANAGER\"\n}"
+        },
+        "description": "Создать менеджера или супер-админа. SUPER_ADMIN.\nВозвращает ManagerResponse с plain-text паролем."
+      }
+    },
+    {
+      "name": "PATCH /admin/managers/:id",
+      "request": {
+        "method": "PATCH",
+        "url": "{{baseUrl}}/admin/managers/{{managerId}}",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"login\": \"manager01_new\",\n  \"password\": \"NewPass456\",\n  \"firstName\": \"Айгуль\",\n  \"lastName\": \"Омурова\",\n  \"phone\": \"+996700000011\",\n  \"branchId\": \"{{branchId}}\"\n}"
+        },
+        "description": "Обновить данные менеджера. Все поля опциональны. login и password — меняют учётные данные. branchId — перевод в другой филиал. Нельзя редактировать SUPER_ADMIN. SUPER_ADMIN."
+      }
+    },
+    {
+      "name": "DELETE /admin/managers/:id",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/admin/managers/{{managerId}}",
+        "description": "Удалить менеджера. Нельзя удалить себя и SUPER_ADMIN. SUPER_ADMIN."
+      }
+    }
+  ]
+}

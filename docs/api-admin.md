@@ -188,6 +188,19 @@ Query: `branchId` (опционально, только для SUPER_ADMIN)
 { "count": 15 }
 ```
 
+### GET /admin/orders/delivered-daily
+Query: `branchId` (опционально, только для SUPER_ADMIN)
+Количество выданных заказов по дням за последние 7 дней (включая сегодня). Дни с нулём включены.
+> MANAGER — только свой филиал. SUPER_ADMIN без `branchId` — всё приложение.
+```json
+// Response 200
+[
+  { "date": "2026-03-09", "count": 5 },
+  { "date": "2026-03-10", "count": 0 },
+  { "date": "2026-03-15", "count": 8 }
+]
+```
+
 ### GET /admin/orders/revenue
 Query: `branchId` (опционально), `year` (опционально), `month` (опционально)
 Выручка по доставленным заказам за указанный месяц. По умолчанию — текущий месяц.

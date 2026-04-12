@@ -1,4 +1,4 @@
-package com.cargoapp.backend.users.entity;
+package com.cargoapp.backend.managers.entity;
 
 import com.cargoapp.backend.branches.entity.BranchEntity;
 import jakarta.persistence.*;
@@ -8,16 +8,15 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "managers")
 @Getter
 @Setter
 @NoArgsConstructor
-public class UserEntity {
+public class ManagerEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -26,11 +25,15 @@ public class UserEntity {
     @Column(unique = true, nullable = false)
     private String login;
 
-    @Column(unique = true, nullable = false)
-    private String email;
-
     @Column(nullable = false)
     private String passwordHash;
+
+    /**
+     * Пароль в открытом виде — хранится для отображения в админке.
+     * Обновляется вместе с passwordHash при смене пароля.
+     */
+    @Column(nullable = false)
+    private String password;
 
     @Column(nullable = false)
     private String firstName;
@@ -41,21 +44,16 @@ public class UserEntity {
     @Column(nullable = false)
     private String phone;
 
+    /**
+     * Роль менеджера: MANAGER или SUPER_ADMIN.
+     * Хранится как строка (не FK) — роли фиксированы и не меняются.
+     */
     @Column(nullable = false)
-    private LocalDate dateOfBirth;
-
-    @Column(unique = true)
-    private String personalCode;
+    private String role;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_id")
     private BranchEntity branch;
-
-    private boolean chatBanned = false;
-
-    @Enumerated(EnumType.ORDINAL)
-    @Column(nullable = false)
-    private UserStatus status = UserStatus.ACTIVE;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

@@ -64,6 +64,22 @@
           }
         },
         {
+          "name": "GET /admin/orders/delivered-daily",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "{{adminCookie}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/admin/orders/delivered-daily",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "orders", "delivered-daily"],
+              "query": [
+                { "key": "branchId", "value": "{{branchId}}", "disabled": true }
+              ]
+            },
+            "description": "Выданные заказы по дням за последние 7 дней. Дни с нулём включены."
+          }
+        },
+        {
           "name": "GET /admin/orders/stats",
           "request": {
             "method": "GET",

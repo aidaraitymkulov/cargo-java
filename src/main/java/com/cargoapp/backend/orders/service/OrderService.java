@@ -4,6 +4,7 @@ import com.cargoapp.backend.common.component.BranchResolver;
 import com.cargoapp.backend.common.dto.CountResponse;
 import com.cargoapp.backend.common.dto.PagedResponse;
 import com.cargoapp.backend.common.exception.AppException;
+import com.cargoapp.backend.orders.dto.DailyCountResponse;
 import com.cargoapp.backend.orders.dto.OrderAdminResponse;
 import com.cargoapp.backend.orders.dto.OrderDetailResponse;
 import com.cargoapp.backend.orders.dto.OrderResponse;
@@ -22,9 +23,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -59,7 +65,7 @@ public class OrderService {
     }
 
     public CountResponse getOrderStats(UUID currentUserId, UUID branchId) {
-        UUID effectiveBranchId = branchResolver.resolve(currentUserId, branchId);
+        UUID effectiveBranchId = branchResolver.resolveForManager(currentUserId, branchId);
         long count = effectiveBranchId != null
                 ? orderRepository.countPendingPickupByBranch(effectiveBranchId)
                 : orderRepository.countPendingPickup();
@@ -67,7 +73,7 @@ public class OrderService {
     }
 
     public RevenueResponse getRevenue(UUID currentUserId, UUID branchId, int year, int month) {
-        UUID effectiveBranchId = branchResolver.resolve(currentUserId, branchId);
+        UUID effectiveBranchId = branchResolver.resolveForManager(currentUserId, branchId);
         LocalDateTime from = LocalDate.of(year, month, 1).atStartOfDay();
         LocalDateTime to = from.plusMonths(1);
 
@@ -80,6 +86,29 @@ public class OrderService {
         BigDecimal revenue = row[0] != null ? (BigDecimal) row[0] : BigDecimal.ZERO;
         long ordersCount = row[1] != null ? ((Number) row[1]).longValue() : 0L;
         return new RevenueResponse(revenue, ordersCount);
+    }
+
+    public List<DailyCountResponse> getDeliveredDaily(UUID currentUserId, UUID branchId) {
+        UUID effectiveBranchId = branchResolver.resolveForManager(currentUserId, branchId);
+        LocalDateTime to = LocalDate.now().plusDays(1).atStartOfDay();
+        LocalDateTime from = LocalDate.now().minusDays(6).atStartOfDay();
+
+        List<Object[]> rows = effectiveBranchId != null
+                ? orderRepository.countDeliveredByDayAndBranch(effectiveBranchId, from, to)
+                : orderRepository.countDeliveredByDay(from, to);
+
+        Map<LocalDate, Long> countByDate = rows.stream()
+                .collect(Collectors.toMap(
+                        r -> ((Date) r[0]).toLocalDate(),
+                        r -> ((Number) r[1]).longValue()
+                ));
+
+        List<DailyCountResponse> result = new ArrayList<>();
+        for (int i = 6; i >= 0; i--) {
+            LocalDate date = LocalDate.now().minusDays(i);
+            result.add(new DailyCountResponse(date, countByDate.getOrDefault(date, 0L)));
+        }
+        return result;
     }
 
     private OrderStatus parseOrderStatus(String status) {

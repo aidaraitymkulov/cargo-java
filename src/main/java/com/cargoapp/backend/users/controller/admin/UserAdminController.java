@@ -22,23 +22,22 @@ public class UserAdminController {
 
     @GetMapping
     public PagedResponse<UserResponse> getUsers(
-            @CurrentUserId UUID currentUserId,
+            @CurrentUserId UUID currentManagerId,
             @RequestParam(required = false) String prefix,
             @RequestParam(required = false) String code,
             @RequestParam(required = false) UUID branchId,
-            @RequestParam(required = false) String role,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int pageSize
     ) {
-        return userService.getUsers(currentUserId, prefix, code, branchId, role, page, pageSize);
+        return userService.getUsers(currentManagerId, prefix, code, branchId, page, pageSize);
     }
 
     @GetMapping("/stats")
     public UserStatsResponse getUserStats(
-            @CurrentUserId UUID currentUserId,
+            @CurrentUserId UUID currentManagerId,
             @RequestParam(required = false) UUID branchId
     ) {
-        return userService.getUserStats(currentUserId, branchId);
+        return userService.getUserStats(currentManagerId, branchId);
     }
 
     @GetMapping("/{userId}")
@@ -61,5 +60,4 @@ public class UserAdminController {
     public UserResponse chatUnban(@PathVariable UUID userId) {
         return userService.chatUnban(userId);
     }
-
 }

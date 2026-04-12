@@ -14,7 +14,6 @@ public record UserResponse(
         String phone,
         LocalDate dateOfBirth,
         String personalCode,
-        String role,
         BranchResponse branch,
         String status,
         LocalDateTime createdAt,
