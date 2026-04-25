@@ -35,10 +35,6 @@ public class ManagerService {
             throw new AppException("CONFLICT", HttpStatus.CONFLICT, "Логин уже занят");
         }
 
-        if ("SUPER_ADMIN".equals(request.role()) && managerRepository.existsByRole("SUPER_ADMIN")) {
-            throw new AppException("CONFLICT", HttpStatus.CONFLICT, "Супер-администратор уже существует");
-        }
-
         BranchEntity branch = branchRepository.findById(request.branchId())
                 .orElseThrow(() -> new AppException("BRANCH_NOT_FOUND", HttpStatus.NOT_FOUND, "Филиал не найден"));
 
@@ -49,7 +45,7 @@ public class ManagerService {
         manager.setFirstName(request.firstName());
         manager.setLastName(request.lastName());
         manager.setPhone(request.phone());
-        manager.setRole(request.role());
+        manager.setRole("MANAGER");
         manager.setBranch(branch);
 
         return managerMapper.toManagerResponse(managerRepository.save(manager));

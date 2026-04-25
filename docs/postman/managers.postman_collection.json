@@ -48,7 +48,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"login\": \"manager01\",\n  \"password\": \"Manager123\",\n  \"firstName\": \"Айгуль\",\n  \"lastName\": \"Сатыбалдиева\",\n  \"phone\": \"+996700000010\",\n  \"branchId\": \"{{branchId}}\",\n  \"role\": \"MANAGER\"\n}"
+          "raw": "{\n  \"login\": \"manager01\",\n  \"password\": \"Manager123\",\n  \"firstName\": \"Айгуль\",\n  \"lastName\": \"Сатыбалдиева\",\n  \"phone\": \"+996700000010\",\n  \"branchId\": \"{{branchId}}\"\n}"
         },
         "description": "Создать менеджера или супер-админа. SUPER_ADMIN.\nВозвращает ManagerResponse с plain-text паролем."
       }
