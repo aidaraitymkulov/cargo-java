@@ -30,16 +30,8 @@
           "name": "GET /admin/branches",
           "request": {
             "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/admin/branches?page=1&pageSize=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "branches"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "pageSize", "value": "20" }
-              ]
-            },
-            "description": "Список всех филиалов с пагинацией. SUPER_ADMIN."
+            "url": "{{baseUrl}}/admin/branches",
+            "description": "Список всех филиалов. SUPER_ADMIN."
           }
         },
         {

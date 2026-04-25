@@ -4,13 +4,13 @@ import com.cargoapp.backend.branches.dto.BranchResponse;
 import com.cargoapp.backend.branches.dto.CreateBranchRequest;
 import com.cargoapp.backend.branches.dto.UpdateBranchRequest;
 import com.cargoapp.backend.branches.service.BranchService;
-import com.cargoapp.backend.common.dto.PagedResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -22,11 +22,8 @@ public class BranchAdminController {
     private final BranchService branchService;
 
     @GetMapping
-    public PagedResponse<BranchResponse> getAll(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int pageSize
-    ) {
-        return branchService.getAll(page, pageSize);
+    public List<BranchResponse> getAll() {
+        return branchService.getAll();
     }
 
     @GetMapping("/{id}")
