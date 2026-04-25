@@ -2,7 +2,6 @@ package com.cargoapp.backend.managers.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.util.UUID;
@@ -27,9 +26,5 @@ public record CreateManagerRequest(
         String phone,
 
         @NotNull(message = "Филиал обязателен")
-        UUID branchId,
-
-        @NotBlank(message = "Роль обязательна")
-        @Pattern(regexp = "MANAGER|SUPER_ADMIN", message = "Роль должна быть MANAGER или SUPER_ADMIN")
-        String role
+        UUID branchId
 ) {}

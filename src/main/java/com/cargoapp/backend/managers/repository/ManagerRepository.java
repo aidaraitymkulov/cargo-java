@@ -14,7 +14,5 @@ public interface ManagerRepository extends JpaRepository<ManagerEntity, UUID> {
 
     boolean existsByLogin(String login);
 
-    boolean existsByRole(String role);
-
     List<ManagerEntity> findAllByRoleNot(String role, Sort sort);
 }
