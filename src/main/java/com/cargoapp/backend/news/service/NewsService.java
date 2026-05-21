@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +35,7 @@ public class NewsService {
 
     @Transactional(readOnly = true)
     public Page<NewsResponse> getAll(int page, int pageSize) {
-        var pageable = PageRequest.of(page - 1, pageSize);
+        var pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
         return newsRepository.findAll(pageable)
                 .map(newsMapper::toResponse);
     }
@@ -55,7 +56,7 @@ public class NewsService {
         var news = new NewsEntity();
         news.setTitle(request.title());
         news.setContent(request.content());
-        news.setCover(saveImage(image));
+        news.setImage(saveImage(image));
 
         return newsMapper.toResponse(newsRepository.save(news));
     }
@@ -65,12 +66,12 @@ public class NewsService {
         var news = newsRepository.findById(id)
                 .orElseThrow(() -> new AppException("NEWS_NOT_FOUND", HttpStatus.NOT_FOUND, "Новость не найдена"));
 
-        if (request.title() != null) news.setTitle(request.title());
-        if (request.content() != null) news.setContent(request.content());
+        if (request != null && request.title() != null) news.setTitle(request.title());
+        if (request != null && request.content() != null) news.setContent(request.content());
 
         if (image != null && !image.isEmpty()) {
-            deleteImage(news.getCover());
-            news.setCover(saveImage(image));
+            deleteImage(news.getImage());
+            news.setImage(saveImage(image));
         }
 
         return newsMapper.toResponse(newsRepository.save(news));
@@ -80,7 +81,7 @@ public class NewsService {
     public void delete(UUID id) {
         var news = newsRepository.findById(id)
                 .orElseThrow(() -> new AppException("NEWS_NOT_FOUND", HttpStatus.NOT_FOUND, "Новость не найдена"));
-        deleteImage(news.getCover());
+        deleteImage(news.getImage());
         newsRepository.delete(news);
     }
 

@@ -18,13 +18,16 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
-server:
-  port: 8080
-
   servlet:
     multipart:
       max-file-size: 20MB
       max-request-size: 25MB
+
+server:
+  port: 8080
+  tomcat:
+    max-http-form-post-size: 25MB
+    max-swallow-size: -1
 
 app:
   upload-dir: uploads
