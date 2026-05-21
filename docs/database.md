@@ -122,7 +122,7 @@
 | Поле | Тип |
 |---|---|
 | id | uuid PK |
-| cover | varchar NULLABLE | URL картинки |
+| image | varchar | URL картинки |
 | title | varchar |
 | content | text |
 | created_at | timestamp |
