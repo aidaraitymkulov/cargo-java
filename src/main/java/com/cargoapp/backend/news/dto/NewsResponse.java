@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public record NewsResponse(
         UUID id,
-        String cover,
+        String image,
         String title,
         String content,
         LocalDateTime createdAt,

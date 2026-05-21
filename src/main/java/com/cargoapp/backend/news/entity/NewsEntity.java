@@ -20,7 +20,7 @@ public class NewsEntity {
     private UUID id;
 
     @Column(nullable = false)
-    private String cover;
+    private String image;
 
     @Column(nullable = false)
     private String title;

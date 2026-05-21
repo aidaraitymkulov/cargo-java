@@ -67,7 +67,7 @@ Base URL: `https://api.adesexpress.com`
 
 ### News
 ```json
-{ "id": "uuid", "cover": "url | null", "title": "...", "content": "...", "createdAt": "ISO" }
+{ "id": "uuid", "image": "url", "title": "...", "content": "...", "createdAt": "ISO" }
 ```
 
 ### ChatMessage
