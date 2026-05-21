@@ -8,7 +8,7 @@ Base URL: `https://api.adesexpress.com/admin`
 - Заголовок `Authorization` не используется
 
 ## Роли
-- `MANAGER` — базовый доступ (пользователи, импорт, чат, уведомления, новости)
+- `MANAGER` — базовый доступ (пользователи, импорт, чат, уведомления, чтение новостей)
 - `SUPER_ADMIN` — полный доступ (+ менеджеры, филиалы, отчёты по пользователям)
 
 ## Модели
@@ -269,22 +269,32 @@ Body: `multipart/form-data`, поле `file` (Excel)
 
 ## Новости — `/admin/news`
 
-### POST /admin/news
-Body: `multipart/form-data`: `title`, `content`, `image` (опционально)
+### News (модель)
 ```json
-// Response 201: News { id, cover, title, content, createdAt, updatedAt }
-// Errors: 400 VALIDATION_ERROR, 413 PAYLOAD_TOO_LARGE
+{ "id": "uuid", "image": "url", "title": "...", "content": "...", "createdAt": "ISO", "updatedAt": "ISO" }
+```
+
+### POST /admin/news
+Body: `multipart/form-data`
+- `title` (text, обязательно)
+- `content` (text, обязательно)
+- `image` (file, обязательно, только image/*)
+```json
+// Response 201: News
+// Errors: 400 VALIDATION_ERROR, 413 FILE_TOO_LARGE, 415 UNSUPPORTED_MEDIA_TYPE
 ```
 
 ### GET /admin/news → { items: [News], page, pageSize, total }
 ### GET /admin/news/{newsId} → News (404 NEWS_NOT_FOUND)
 
 ### PATCH /admin/news/{newsId}
+Body: `multipart/form-data` (все поля опциональны)
+- `title` (text)
+- `content` (text)
+- `image` (file, только image/*)
 ```json
-// Request (опциональные)
-{ "title": "...", "content": "..." }
 // Response 200: News
-// Errors: 404 NEWS_NOT_FOUND, 400 VALIDATION_ERROR
+// Errors: 404 NEWS_NOT_FOUND, 400 VALIDATION_ERROR, 415 UNSUPPORTED_MEDIA_TYPE
 ```
 
 ### DELETE /admin/news/{newsId}

@@ -8,9 +8,11 @@ import com.cargoapp.backend.news.entity.NewsEntity;
 import com.cargoapp.backend.news.mapper.NewsMapper;
 import com.cargoapp.backend.news.repository.NewsRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NewsService {
@@ -34,7 +37,7 @@ public class NewsService {
 
     @Transactional(readOnly = true)
     public Page<NewsResponse> getAll(int page, int pageSize) {
-        var pageable = PageRequest.of(page - 1, pageSize);
+        var pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
         return newsRepository.findAll(pageable)
                 .map(newsMapper::toResponse);
     }
@@ -55,7 +58,7 @@ public class NewsService {
         var news = new NewsEntity();
         news.setTitle(request.title());
         news.setContent(request.content());
-        news.setCover(saveImage(image));
+        news.setImage(saveImage(image));
 
         return newsMapper.toResponse(newsRepository.save(news));
     }
@@ -68,19 +71,22 @@ public class NewsService {
         if (request.title() != null) news.setTitle(request.title());
         if (request.content() != null) news.setContent(request.content());
 
+        String oldImage = null;
         if (image != null && !image.isEmpty()) {
-            deleteImage(news.getCover());
-            news.setCover(saveImage(image));
+            oldImage = news.getImage();
+            news.setImage(saveImage(image));
         }
 
-        return newsMapper.toResponse(newsRepository.save(news));
+        NewsResponse response = newsMapper.toResponse(newsRepository.save(news));
+        deleteImage(oldImage);
+        return response;
     }
 
     @Transactional
     public void delete(UUID id) {
         var news = newsRepository.findById(id)
                 .orElseThrow(() -> new AppException("NEWS_NOT_FOUND", HttpStatus.NOT_FOUND, "Новость не найдена"));
-        deleteImage(news.getCover());
+        deleteImage(news.getImage());
         newsRepository.delete(news);
     }
 
@@ -91,7 +97,7 @@ public class NewsService {
             Path path = Paths.get(uploadDir, "news", filename);
             Files.deleteIfExists(path);
         } catch (IOException e) {
-            // не критично — логируем и продолжаем
+            log.warn("Failed to delete image file '{}': {}", coverUrl, e.getMessage(), e);
         }
     }
 
@@ -102,7 +108,11 @@ public class NewsService {
         }
 
         try {
-            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            String original = file.getOriginalFilename();
+            String safeName = (original != null)
+                    ? Paths.get(original).getFileName().toString().replaceAll("[^a-zA-Z0-9._-]", "_")
+                    : "upload";
+            String filename = UUID.randomUUID() + "_" + safeName;
             Path path = Paths.get(uploadDir, "news", filename);
             Files.createDirectories(path.getParent());
             file.transferTo(path);

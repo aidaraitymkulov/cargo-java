@@ -9,7 +9,7 @@ public class NewsMapper {
     public NewsResponse toResponse(NewsEntity news) {
         return new NewsResponse(
                 news.getId(),
-                news.getCover(),
+                news.getImage(),
                 news.getTitle(),
                 news.getContent(),
                 news.getCreatedAt(),

@@ -110,10 +110,14 @@
               "mode": "formdata",
               "formdata": [
                 {
-                  "key": "data",
-                  "value": "{\"title\": \"Заголовок новости\", \"content\": \"Текст новости\"}",
-                  "type": "text",
-                  "contentType": "application/json"
+                  "key": "title",
+                  "value": "Заголовок новости",
+                  "type": "text"
+                },
+                {
+                  "key": "content",
+                  "value": "Текст новости",
+                  "type": "text"
                 },
                 {
                   "key": "image",
@@ -139,10 +143,16 @@
               "mode": "formdata",
               "formdata": [
                 {
-                  "key": "data",
-                  "value": "{\"title\": \"Обновлённый заголовок\"}",
+                  "key": "title",
+                  "value": "Обновлённый заголовок",
                   "type": "text",
-                  "contentType": "application/json"
+                  "disabled": true
+                },
+                {
+                  "key": "content",
+                  "value": "Обновлённый текст",
+                  "type": "text",
+                  "disabled": true
                 },
                 {
                   "key": "image",
