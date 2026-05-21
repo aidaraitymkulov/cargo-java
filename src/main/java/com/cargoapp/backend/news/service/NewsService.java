@@ -8,6 +8,7 @@ import com.cargoapp.backend.news.entity.NewsEntity;
 import com.cargoapp.backend.news.mapper.NewsMapper;
 import com.cargoapp.backend.news.repository.NewsRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NewsService {
@@ -66,15 +68,18 @@ public class NewsService {
         var news = newsRepository.findById(id)
                 .orElseThrow(() -> new AppException("NEWS_NOT_FOUND", HttpStatus.NOT_FOUND, "Новость не найдена"));
 
-        if (request != null && request.title() != null) news.setTitle(request.title());
-        if (request != null && request.content() != null) news.setContent(request.content());
+        if (request.title() != null) news.setTitle(request.title());
+        if (request.content() != null) news.setContent(request.content());
 
+        String oldImage = null;
         if (image != null && !image.isEmpty()) {
-            deleteImage(news.getImage());
+            oldImage = news.getImage();
             news.setImage(saveImage(image));
         }
 
-        return newsMapper.toResponse(newsRepository.save(news));
+        NewsResponse response = newsMapper.toResponse(newsRepository.save(news));
+        deleteImage(oldImage);
+        return response;
     }
 
     @Transactional
@@ -92,7 +97,7 @@ public class NewsService {
             Path path = Paths.get(uploadDir, "news", filename);
             Files.deleteIfExists(path);
         } catch (IOException e) {
-            // не критично — логируем и продолжаем
+            log.warn("Failed to delete image file '{}': {}", coverUrl, e.getMessage(), e);
         }
     }
 
@@ -103,7 +108,11 @@ public class NewsService {
         }
 
         try {
-            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            String original = file.getOriginalFilename();
+            String safeName = (original != null)
+                    ? Paths.get(original).getFileName().toString().replaceAll("[^a-zA-Z0-9._-]", "_")
+                    : "upload";
+            String filename = UUID.randomUUID() + "_" + safeName;
             Path path = Paths.get(uploadDir, "news", filename);
             Files.createDirectories(path.getParent());
             file.transferTo(path);

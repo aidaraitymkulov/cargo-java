@@ -6,6 +6,7 @@ import com.cargoapp.backend.news.dto.UpdateNewsRequest;
 import com.cargoapp.backend.news.service.NewsService;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class NewsAdminController {
 
     @PostMapping(consumes = "multipart/form-data")
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public NewsResponse create(
             @RequestParam @NotBlank String title,
             @RequestParam @NotBlank String content,
@@ -49,10 +51,11 @@ public class NewsAdminController {
     }
 
     @PatchMapping(value = "/{newsId}", consumes = "multipart/form-data")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public NewsResponse update(
             @PathVariable UUID newsId,
-            @RequestParam(required = false) String title,
-            @RequestParam(required = false) String content,
+            @RequestParam(required = false) @Size(min = 1) String title,
+            @RequestParam(required = false) @Size(min = 1) String content,
             @RequestPart(value = "image", required = false) MultipartFile image
     ) {
         return newsService.update(newsId, new UpdateNewsRequest(title, content), image);
@@ -60,6 +63,7 @@ public class NewsAdminController {
 
     @DeleteMapping("/{newsId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public void delete(@PathVariable UUID newsId) {
         newsService.delete(newsId);
     }
