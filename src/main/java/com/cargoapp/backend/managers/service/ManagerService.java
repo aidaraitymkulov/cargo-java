@@ -41,7 +41,6 @@ public class ManagerService {
         ManagerEntity manager = new ManagerEntity();
         manager.setLogin(request.login());
         manager.setPasswordHash(passwordEncoder.encode(request.password()));
-        manager.setPassword(request.password());  // plain text для админки
         manager.setFirstName(request.firstName());
         manager.setLastName(request.lastName());
         manager.setPhone(request.phone());
@@ -79,7 +78,6 @@ public class ManagerService {
 
         if (request.password() != null && !request.password().isBlank()) {
             manager.setPasswordHash(passwordEncoder.encode(request.password()));
-            manager.setPassword(request.password());
         }
 
         if (request.firstName() != null) {
