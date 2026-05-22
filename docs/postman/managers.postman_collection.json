@@ -50,7 +50,7 @@
           "mode": "raw",
           "raw": "{\n  \"login\": \"manager01\",\n  \"password\": \"Manager123\",\n  \"firstName\": \"Айгуль\",\n  \"lastName\": \"Сатыбалдиева\",\n  \"phone\": \"+996700000010\",\n  \"branchId\": \"{{branchId}}\"\n}"
         },
-        "description": "Создать менеджера или супер-админа. SUPER_ADMIN.\nВозвращает ManagerResponse с plain-text паролем."
+        "description": "Создать менеджера. SUPER_ADMIN.\nПароль хешируется (BCrypt) и не возвращается в ответе."
       }
     },
     {

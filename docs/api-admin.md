@@ -24,6 +24,16 @@ Base URL: `https://api.adesexpress.com/admin`
 }
 ```
 
+### Manager
+```json
+{
+  "id": "uuid", "login": "manager01",
+  "firstName": "Айгуль", "lastName": "Сатыбалдиева", "phone": "+996700000010",
+  "role": "MANAGER | SUPER_ADMIN", "branch": Branch,
+  "createdAt": "ISO"
+}
+```
+
 ### Branch (Admin — полная)
 ```json
 {
@@ -69,30 +79,36 @@ Base URL: `https://api.adesexpress.com/admin`
 ### POST /admin/managers
 ```json
 // Request
-{ "login": "admin@example.com", "password": "StrongP@ssw0rd",
-  "firstName": "Admin", "lastName": "User", "phone": "+996777000000",
-  "branchId": "uuid", "role": "MANAGER | SUPER_ADMIN" }
-// Response 201: User
+{ "login": "manager01", "password": "StrongP@ssw0rd",
+  "firstName": "Айгуль", "lastName": "Сатыбалдиева", "phone": "+996777000000",
+  "branchId": "uuid" }
+// Response 201: Manager
 // Errors: 400 VALIDATION_ERROR, 403 FORBIDDEN, 409 CONFLICT, 404 BRANCH_NOT_FOUND
 ```
 
 ### GET /admin/managers
-Query: `page`, `pageSize`
 ```json
-// Response 200
-{ "items": [User], "page": 1, "pageSize": 20, "total": 3 }
+// Response 200: [Manager]
+```
+
+### GET /admin/managers/{managerId}
+```json
+// Response 200: Manager
+// Errors: 404 NOT_FOUND
 ```
 
 ### PATCH /admin/managers/{managerId}
+Все поля опциональны. Если передан `password` — хешируется и сохраняется (сброс пароля).
 ```json
-// Request (все опциональные)
-{ "firstName": "...", "lastName": "...", "phone": "..." }
-// Response 200: User
-// Errors: 401, 403, 404 USER_NOT_FOUND, 400 VALIDATION_ERROR
+// Request
+{ "login": "...", "password": "NewPass456",
+  "firstName": "...", "lastName": "...", "phone": "...", "branchId": "uuid" }
+// Response 200: Manager
+// Errors: 401, 403 FORBIDDEN, 404 NOT_FOUND, 400 VALIDATION_ERROR, 409 CONFLICT
 ```
 
 ### DELETE /admin/managers/{managerId}
-Response 204. Errors: 401, 403, 404 USER_NOT_FOUND, 409 CONFLICT (нельзя удалить себя)
+Response 204. Errors: 401, 403, 404 NOT_FOUND, 409 CONFLICT (нельзя удалить себя)
 
 ---
 
