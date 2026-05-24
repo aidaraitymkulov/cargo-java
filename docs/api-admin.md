@@ -182,6 +182,54 @@ Errors: 404 USER_NOT_FOUND
 
 ---
 
+## Дашборд — `/admin/dashboard` (MANAGER + SUPER_ADMIN)
+
+### GET /admin/dashboard/summary
+Query: `branchId` (опционально, только SUPER_ADMIN)
+
+> MANAGER всегда видит только свой филиал. SUPER_ADMIN без `branchId` — всё приложение.
+> Поле `revenueThisWeek` присутствует только для SUPER_ADMIN (иначе `null`).
+
+```json
+// Response 200
+{
+  "totalUsers": 312,
+  "newUsersThisMonth": 24,
+  "productsInChina": 120,
+  "productsOnTheWay": 45,
+  "productsAwaitingPickup": 23,
+  "revenueThisWeek": 45000.00
+}
+```
+
+### GET /admin/dashboard/charts/users
+Query: `from` (ISO date), `to` (ISO date), `branchId` (опционально)
+Новые пользователи по дням за произвольный период. Дни с нулём включены.
+```json
+// Response 200
+[
+  { "date": "2026-05-01", "count": 5 },
+  { "date": "2026-05-02", "count": 0 },
+  { "date": "2026-05-24", "count": 3 }
+]
+```
+
+### GET /admin/dashboard/charts/products/in-china
+Query: `from`, `to`, `branchId` (опционально)
+Товары, получившие статус `IN_CHINA` в каждый день периода.
+
+### GET /admin/dashboard/charts/products/on-the-way
+Query: `from`, `to`, `branchId` (опционально)
+Товары, получившие статус `ON_THE_WAY` в каждый день периода.
+
+### GET /admin/dashboard/charts/products/delivered
+Query: `from`, `to`, `branchId` (опционально)
+Товары, выданные (`DELIVERED`) в каждый день периода.
+
+Все графики возвращают формат `[{ "date": "ISO", "count": N }]` с нулями за дни без данных.
+
+---
+
 ## Товары — `/admin/products` (MANAGER + SUPER_ADMIN)
 
 ### GET /admin/products/stats

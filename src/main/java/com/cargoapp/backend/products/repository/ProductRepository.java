@@ -8,10 +8,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.List;
 
 public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
     Page<ProductEntity> findByUser_Id(UUID userId, Pageable pageable);
@@ -43,4 +44,16 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
 
     @Query("SELECT COUNT(p) FROM ProductEntity p WHERE p.status = 'ON_THE_WAY'")
     long countOnTheWay();
+
+    @Query("SELECT COUNT(p) FROM ProductEntity p WHERE p.status = :status")
+    long countByStatusAll(@Param("status") ProductStatus status);
+
+    @Query("SELECT COUNT(p) FROM ProductEntity p WHERE p.status = :status AND p.user.branch.id = :branchId")
+    long countByStatusAndBranch(@Param("status") ProductStatus status, @Param("branchId") UUID branchId);
+
+    @Query("SELECT COALESCE(SUM(p.price), 0) FROM ProductEntity p WHERE p.status = 'DELIVERED' AND p.updatedAt >= :from AND p.updatedAt < :to")
+    BigDecimal revenueForPeriod(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("SELECT COALESCE(SUM(p.price), 0) FROM ProductEntity p WHERE p.status = 'DELIVERED' AND p.updatedAt >= :from AND p.updatedAt < :to AND p.user.branch.id = :branchId")
+    BigDecimal revenueForPeriodByBranch(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to, @Param("branchId") UUID branchId);
 }
