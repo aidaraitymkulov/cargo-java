@@ -51,21 +51,15 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
     @Query("SELECT COUNT(p) FROM ProductEntity p WHERE p.status = :status AND p.user.branch.id = :branchId")
     long countByStatusAndBranch(@Param("status") ProductStatus status, @Param("branchId") UUID branchId);
 
-    @Query(value = """
-            SELECT COALESCE(SUM(p.price), 0)
-            FROM products p
-            JOIN product_histories ph ON ph.product_id = p.id AND ph.status = 'DELIVERED'
-            WHERE ph.created_at >= :from AND ph.created_at < :to
-            """, nativeQuery = true)
-    BigDecimal revenueForPeriod(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+    @Query("SELECT COALESCE(SUM(p.price), 0) FROM ProductEntity p WHERE p.status = :status AND p.updatedAt >= :from AND p.updatedAt < :to")
+    BigDecimal revenueForPeriod(@Param("status") ProductStatus status, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
-    @Query(value = """
-            SELECT COALESCE(SUM(p.price), 0)
-            FROM products p
-            JOIN product_histories ph ON ph.product_id = p.id AND ph.status = 'DELIVERED'
-            JOIN users u ON u.id = p.user_id
-            WHERE ph.created_at >= :from AND ph.created_at < :to
-            AND u.branch_id = :branchId
-            """, nativeQuery = true)
-    BigDecimal revenueForPeriodByBranch(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to, @Param("branchId") UUID branchId);
+    @Query("SELECT COALESCE(SUM(p.price), 0) FROM ProductEntity p WHERE p.status = :status AND p.updatedAt >= :from AND p.updatedAt < :to AND p.user.branch.id = :branchId")
+    BigDecimal revenueForPeriodByBranch(@Param("status") ProductStatus status, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to, @Param("branchId") UUID branchId);
+
+    @Query("SELECT CAST(p.updatedAt AS date), COUNT(p) FROM ProductEntity p WHERE p.status = :status AND p.updatedAt >= :from AND p.updatedAt < :to GROUP BY CAST(p.updatedAt AS date) ORDER BY CAST(p.updatedAt AS date)")
+    List<Object[]> countDailyByStatus(@Param("status") ProductStatus status, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("SELECT CAST(p.updatedAt AS date), COUNT(p) FROM ProductEntity p WHERE p.status = :status AND p.updatedAt >= :from AND p.updatedAt < :to AND p.user.branch.id = :branchId GROUP BY CAST(p.updatedAt AS date) ORDER BY CAST(p.updatedAt AS date)")
+    List<Object[]> countDailyByStatusAndBranch(@Param("status") ProductStatus status, @Param("branchId") UUID branchId, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }

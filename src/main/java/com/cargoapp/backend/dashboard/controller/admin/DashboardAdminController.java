@@ -45,24 +45,6 @@ public class DashboardAdminController {
         return dashboardService.getUsersChart(currentUserId, branchId, from, to);
     }
 
-    @GetMapping("/charts/products/in-china")
-    public List<DailyStatResponse> getInChinaChart(
-            @CurrentUserId UUID currentUserId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(required = false) UUID branchId) {
-        return dashboardService.getProductsChart(currentUserId, branchId, ProductStatus.IN_CHINA, from, to);
-    }
-
-    @GetMapping("/charts/products/on-the-way")
-    public List<DailyStatResponse> getOnTheWayChart(
-            @CurrentUserId UUID currentUserId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(required = false) UUID branchId) {
-        return dashboardService.getProductsChart(currentUserId, branchId, ProductStatus.ON_THE_WAY, from, to);
-    }
-
     @GetMapping("/charts/products/delivered")
     public List<DailyStatResponse> getDeliveredChart(
             @CurrentUserId UUID currentUserId,

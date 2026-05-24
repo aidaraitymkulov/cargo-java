@@ -43,40 +43,6 @@
       }
     },
     {
-      "name": "Chart — Products IN_CHINA",
-      "request": {
-        "method": "GET",
-        "header": [{ "key": "Cookie", "value": "{{adminCookie}}" }],
-        "url": {
-          "raw": "{{baseUrl}}/admin/dashboard/charts/products/in-china?from=2026-05-01&to=2026-05-24",
-          "host": ["{{baseUrl}}"],
-          "path": ["admin", "dashboard", "charts", "products", "in-china"],
-          "query": [
-            { "key": "from", "value": "2026-05-01" },
-            { "key": "to", "value": "2026-05-24" },
-            { "key": "branchId", "value": "{{branchId}}", "disabled": true }
-          ]
-        }
-      }
-    },
-    {
-      "name": "Chart — Products ON_THE_WAY",
-      "request": {
-        "method": "GET",
-        "header": [{ "key": "Cookie", "value": "{{adminCookie}}" }],
-        "url": {
-          "raw": "{{baseUrl}}/admin/dashboard/charts/products/on-the-way?from=2026-05-01&to=2026-05-24",
-          "host": ["{{baseUrl}}"],
-          "path": ["admin", "dashboard", "charts", "products", "on-the-way"],
-          "query": [
-            { "key": "from", "value": "2026-05-01" },
-            { "key": "to", "value": "2026-05-24" },
-            { "key": "branchId", "value": "{{branchId}}", "disabled": true }
-          ]
-        }
-      }
-    },
-    {
       "name": "Chart — Products DELIVERED",
       "request": {
         "method": "GET",
