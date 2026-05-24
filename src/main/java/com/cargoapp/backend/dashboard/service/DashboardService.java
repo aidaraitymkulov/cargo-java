@@ -5,7 +5,6 @@ import com.cargoapp.backend.common.exception.AppException;
 import com.cargoapp.backend.dashboard.dto.DailyStatResponse;
 import com.cargoapp.backend.dashboard.dto.DashboardSummaryResponse;
 import com.cargoapp.backend.products.entity.ProductStatus;
-import com.cargoapp.backend.products.repository.ProductHistoryRepository;
 import com.cargoapp.backend.products.repository.ProductRepository;
 import com.cargoapp.backend.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,6 @@ public class DashboardService {
 
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
-    private final ProductHistoryRepository productHistoryRepository;
     private final BranchResolver branchResolver;
 
     public DashboardSummaryResponse getSummary(UUID currentManagerId, UUID branchId, boolean isSuperAdmin) {
@@ -62,8 +60,8 @@ public class DashboardService {
         if (isSuperAdmin) {
             LocalDateTime weekStart = LocalDate.now().minusDays(6).atStartOfDay();
             revenueThisWeek = effectiveBranchId != null
-                    ? productRepository.revenueForPeriodByBranch(weekStart, now, effectiveBranchId)
-                    : productRepository.revenueForPeriod(weekStart, now);
+                    ? productRepository.revenueForPeriodByBranch(ProductStatus.DELIVERED, weekStart, now, effectiveBranchId)
+                    : productRepository.revenueForPeriod(ProductStatus.DELIVERED, weekStart, now);
         }
 
         return new DashboardSummaryResponse(
@@ -94,8 +92,8 @@ public class DashboardService {
         LocalDateTime toDt = to.plusDays(1).atStartOfDay();
 
         List<Object[]> rows = effectiveBranchId != null
-                ? productHistoryRepository.countDailyByStatusAndBranch(status.name(), effectiveBranchId, fromDt, toDt)
-                : productHistoryRepository.countDailyByStatus(status.name(), fromDt, toDt);
+                ? productRepository.countDailyByStatusAndBranch(status, effectiveBranchId, fromDt, toDt)
+                : productRepository.countDailyByStatus(status, fromDt, toDt);
 
         return fillDailyStats(rows, from, to);
     }

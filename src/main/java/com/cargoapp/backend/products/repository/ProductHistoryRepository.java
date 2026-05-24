@@ -13,12 +13,12 @@ public interface ProductHistoryRepository extends JpaRepository<ProductHistoryEn
     List<ProductHistoryEntity> findByProduct_IdOrderByCreatedAtAsc(UUID productId);
 
     @Query(value = """
-            SELECT CAST(ph.created_at AS DATE) AS date, COUNT(*) AS count
-            FROM product_histories ph
-            WHERE ph.status = :status
-            AND ph.created_at >= :from AND ph.created_at < :to
-            GROUP BY CAST(ph.created_at AS DATE)
-            ORDER BY CAST(ph.created_at AS DATE)
+            SELECT CAST(p.updated_at AS DATE) AS date, COUNT(*) AS count
+            FROM products p
+            WHERE p.status = :status
+            AND p.updated_at >= :from AND p.updated_at < :to
+            GROUP BY CAST(p.updated_at AS DATE)
+            ORDER BY CAST(p.updated_at AS DATE)
             """, nativeQuery = true)
     List<Object[]> countDailyByStatus(
             @Param("status") String status,
@@ -26,15 +26,14 @@ public interface ProductHistoryRepository extends JpaRepository<ProductHistoryEn
             @Param("to") LocalDateTime to);
 
     @Query(value = """
-            SELECT CAST(ph.created_at AS DATE) AS date, COUNT(*) AS count
-            FROM product_histories ph
-            JOIN products p ON p.id = ph.product_id
+            SELECT CAST(p.updated_at AS DATE) AS date, COUNT(*) AS count
+            FROM products p
             JOIN users u ON u.id = p.user_id
-            WHERE ph.status = :status
+            WHERE p.status = :status
             AND u.branch_id = :branchId
-            AND ph.created_at >= :from AND ph.created_at < :to
-            GROUP BY CAST(ph.created_at AS DATE)
-            ORDER BY CAST(ph.created_at AS DATE)
+            AND p.updated_at >= :from AND p.updated_at < :to
+            GROUP BY CAST(p.updated_at AS DATE)
+            ORDER BY CAST(p.updated_at AS DATE)
             """, nativeQuery = true)
     List<Object[]> countDailyByStatusAndBranch(
             @Param("status") String status,

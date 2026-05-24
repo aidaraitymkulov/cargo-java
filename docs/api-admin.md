@@ -214,14 +214,6 @@ Query: `from` (ISO date), `to` (ISO date), `branchId` (опционально)
 ]
 ```
 
-### GET /admin/dashboard/charts/products/in-china
-Query: `from`, `to`, `branchId` (опционально)
-Товары, получившие статус `IN_CHINA` в каждый день периода.
-
-### GET /admin/dashboard/charts/products/on-the-way
-Query: `from`, `to`, `branchId` (опционально)
-Товары, получившие статус `ON_THE_WAY` в каждый день периода.
-
 ### GET /admin/dashboard/charts/products/delivered
 Query: `from`, `to`, `branchId` (опционально)
 Товары, выданные (`DELIVERED`) в каждый день периода.
