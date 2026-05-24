@@ -1,6 +1,7 @@
 package com.cargoapp.backend.auth.filter;
 
 import com.cargoapp.backend.auth.service.JwtService;
+import com.cargoapp.backend.common.constants.ClientType;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -36,7 +37,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String subject = claims.getSubject();  // userId или managerId
             String type = claims.get("type", String.class);
 
-            if ("manager".equals(type)) {
+            if (ClientType.MANAGER.getValue().equals(type)) {
                 // Менеджер: выставляем ROLE_ из claim role
                 String role = claims.get("role", String.class);
                 var authentication = new UsernamePasswordAuthenticationToken(
@@ -48,7 +49,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 );
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            } else if ("user".equals(type)) {
+            } else if (ClientType.USER.getValue().equals(type)) {
                 // Мобильный пользователь: без role, просто authenticated
                 var authentication = new UsernamePasswordAuthenticationToken(
                         subject,

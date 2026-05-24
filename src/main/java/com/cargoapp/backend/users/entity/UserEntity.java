@@ -53,7 +53,7 @@ public class UserEntity {
 
     private boolean chatBanned = false;
 
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserStatus status = UserStatus.ACTIVE;
 
