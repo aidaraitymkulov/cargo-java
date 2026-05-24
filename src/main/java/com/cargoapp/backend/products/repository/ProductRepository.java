@@ -9,9 +9,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
     Page<ProductEntity> findByUser_Id(UUID userId, Pageable pageable);
@@ -20,23 +20,22 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
 
     Optional<ProductEntity> findByIdAndUser_Id(UUID id, UUID userId);
 
-    List<ProductEntity> findByOrderId(UUID orderId);
-
     @Query("SELECT p.status, COUNT(p) FROM ProductEntity p WHERE p.user.id = :userId GROUP BY p.status")
     List<Object[]> countByStatusForUser(@Param("userId") UUID userId);
 
     @Query("SELECT MAX(p.updatedAt) FROM ProductEntity p WHERE p.user.id = :userId")
     Optional<LocalDateTime> findLastUpdatedAtByUserId(@Param("userId") UUID userId);
 
-    /**
-     * FIFO-поиск товара для KG-импорта.
-     * Ищем самый старый (по createdAt) непривязанный товар у клиента с данным hatch
-     * который ещё не доставлен.
-     */
-    Optional<ProductEntity> findFirstByUser_IdAndHatchAndOrderIdIsNullAndStatusNotOrderByCreatedAtAsc(
+    Optional<ProductEntity> findFirstByUser_IdAndHatchAndStatusNotOrderByCreatedAtAsc(
             UUID userId,
             String hatch,
             ProductStatus excludedStatus
+    );
+
+    Optional<ProductEntity> findFirstByUser_IdAndHatchAndStatusOrderByCreatedAtAsc(
+            UUID userId,
+            String hatch,
+            ProductStatus status
     );
 
     @Query("SELECT COUNT(p) FROM ProductEntity p WHERE p.user.branch.id = :branchId AND p.status = 'ON_THE_WAY'")

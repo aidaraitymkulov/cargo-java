@@ -5,7 +5,5 @@ import java.util.Map;
 
 public record ItemsSummaryResponse(
         Map<String, Long> productsByStatus,
-        long activeOrdersCount,
-        long deliveredOrdersCount,
         LocalDateTime lastUpdatedAt
 ) {}

@@ -73,8 +73,7 @@ public class ProductService {
 
         LocalDateTime lastUpdatedAt = productRepository.findLastUpdatedAtByUserId(userId).orElse(null);
 
-        // TODO: заполнить когда будет orders домен
-        return new ItemsSummaryResponse(counts, 0L, 0L, lastUpdatedAt);
+        return new ItemsSummaryResponse(counts, lastUpdatedAt);
     }
 
     public CountResponse getProductStats(UUID currentUserId, UUID branchId) {
@@ -83,12 +82,6 @@ public class ProductService {
                 ? productRepository.countOnTheWayByBranch(effectiveBranchId)
                 : productRepository.countOnTheWay();
         return new CountResponse(count);
-    }
-
-    public List<ProductResponse> getProductsByOrderId(UUID orderId) {
-        return productRepository.findByOrderId(orderId).stream()
-                .map(productMapper::toProductResponse)
-                .toList();
     }
 
     private ProductStatus parseProductStatus(String status) {

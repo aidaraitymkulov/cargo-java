@@ -36,31 +36,18 @@ Base URL: `https://api.adesexpress.com`
   "id": "uuid",
   "hatch": "YT123456",
   "status": "IN_CHINA | ON_THE_WAY | IN_KG | DELIVERED",
-  "orderId": "uuid | null",
-  "createdAt": "ISO",
-  "updatedAt": "ISO"
-}
-```
-
-### Order
-```json
-{
-  "id": "uuid",
   "price": 5000.00,
   "weight": 3.0,
-  "itemCount": 3,
-  "status": "PENDING_PICKUP | DELIVERED",
   "createdAt": "ISO",
   "updatedAt": "ISO"
 }
 ```
+`price` и `weight` — опциональны, могут быть `null`.
 
 ### ItemsSummary
 ```json
 {
   "productsByStatus": { "IN_CHINA": 2, "ON_THE_WAY": 5, "IN_KG": 1, "DELIVERED": 10 },
-  "activeOrdersCount": 2,
-  "deliveredOrdersCount": 7,
   "lastUpdatedAt": "ISO"
 }
 ```
@@ -215,24 +202,6 @@ Errors: 404 PRODUCT_NOT_FOUND
 ```json
 // Response 200
 { "items": [{ "id": "uuid", "status": "IN_CHINA", "createdAt": "ISO" }], "total": 3 }
-```
-
----
-
-## Orders
-
-### GET /orders
-Query: `status`, `page`, `pageSize`
-```json
-// Response 200
-{ "items": [Order], "page": 1, "pageSize": 20, "total": 5 }
-```
-
-### GET /orders/{orderId}
-```json
-// Response 200
-{ "order": Order, "products": [Product] }
-// Errors: 404 ORDER_NOT_FOUND
 ```
 
 ---

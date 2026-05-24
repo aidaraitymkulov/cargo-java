@@ -15,7 +15,8 @@ public class ProductMapper {
                 product.getId(),
                 product.getHatch(),
                 product.getStatus(),
-                product.getOrderId(),
+                product.getPrice(),
+                product.getWeight(),
                 product.getCreatedAt(),
                 product.getUpdatedAt()
         );
@@ -29,8 +30,9 @@ public class ProductMapper {
                 product.getUser().getFirstName(),
                 product.getUser().getLastName(),
                 product.getUser().getPersonalCode(),
-                product.getOrderId(),
                 product.getStatus(),
+                product.getPrice(),
+                product.getWeight(),
                 product.getCreatedAt(),
                 product.getUpdatedAt()
         );
