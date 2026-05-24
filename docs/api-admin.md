@@ -45,16 +45,11 @@ Base URL: `https://api.adesexpress.com/admin`
 
 ### Product
 ```json
-{ "id": "uuid", "hatch": "YT123", "userId": "uuid", "orderId": "uuid | null",
-  "status": "IN_CHINA | ON_THE_WAY | IN_KG | DELIVERED", "createdAt": "ISO", "updatedAt": "ISO" }
+{ "id": "uuid", "hatch": "YT123", "userId": "uuid", "firstName": "...", "lastName": "...",
+  "personalCode": "AN0001", "status": "IN_CHINA | ON_THE_WAY | IN_KG | DELIVERED",
+  "price": 5000.00, "weight": 3.0, "createdAt": "ISO", "updatedAt": "ISO" }
 ```
-
-### Order
-```json
-{ "id": "uuid", "userId": "uuid", "branch": Branch, "price": 5000.00,
-  "weight": 3.0, "itemCount": 3, "status": "PENDING_PICKUP | DELIVERED",
-  "createdAt": "ISO", "updatedAt": "ISO" }
-```
+`price` и `weight` — опциональны, могут быть `null`.
 
 ---
 
@@ -185,47 +180,6 @@ Errors: 404 USER_NOT_FOUND
 { "items": [Product], "page": 1, "pageSize": 50, "total": 10 }
 ```
 
-### GET /admin/users/{userId}/orders
-```json
-// Response 200
-{ "items": [Order], "page": 1, "pageSize": 20, "total": 5 }
-```
-
----
-
-## Заказы — `/admin/orders` (MANAGER + SUPER_ADMIN)
-
-### GET /admin/orders/stats
-Query: `branchId` (опционально, только для SUPER_ADMIN)
-Количество заказов со статусом `PENDING_PICKUP`.
-> MANAGER — только свой филиал. SUPER_ADMIN без `branchId` — всё приложение.
-```json
-// Response 200
-{ "count": 15 }
-```
-
-### GET /admin/orders/delivered-daily
-Query: `branchId` (опционально, только для SUPER_ADMIN)
-Количество выданных заказов по дням за последние 7 дней (включая сегодня). Дни с нулём включены.
-> MANAGER — только свой филиал. SUPER_ADMIN без `branchId` — всё приложение.
-```json
-// Response 200
-[
-  { "date": "2026-03-09", "count": 5 },
-  { "date": "2026-03-10", "count": 0 },
-  { "date": "2026-03-15", "count": 8 }
-]
-```
-
-### GET /admin/orders/revenue
-Query: `branchId` (опционально), `year` (опционально), `month` (опционально)
-Выручка по доставленным заказам за указанный месяц. По умолчанию — текущий месяц.
-> MANAGER — только свой филиал. SUPER_ADMIN без `branchId` — всё приложение.
-```json
-// Response 200
-{ "revenue": 125000.00, "ordersCount": 42 }
-```
-
 ---
 
 ## Товары — `/admin/products` (MANAGER + SUPER_ADMIN)
@@ -259,25 +213,24 @@ Body: `multipart/form-data`, поле `file` (Excel)
 ### POST /admin/import/parcels/kg/{personalCodePrefix}/in-kg
 Body: `multipart/form-data`, поле `file` (Excel)
 Колонки: A=personalCode (итог), B=hatch, C=вес (итог), D=цена (итог)
+Устанавливает `price` и `weight` на каждый товар блока, статус → `IN_KG`.
 ```json
 // Response 200
-{ "processedOrders": 20, "createdOrders": 20, "productsLinked": 80,
-  "newProductsCreated": 5,
+{ "processed": 20,
   "errors": [{ "row": 12, "code": "USER_NOT_FOUND", "message": "..." }] }
 // HTTP Errors:
-// 400 VALIDATION_ERROR — prefix в пути ≠ кодам в файле (с номером строки)
+// 400 VALIDATION_ERROR
 // 403 FORBIDDEN — менеджер загружает не свой филиал
 // 404 BRANCH_NOT_FOUND
 // 500 IMPORT_ERROR
 ```
 
 ### POST /admin/import/parcels/kg/{personalCodePrefix}/delivered
-Тот же формат файла. Переводит заказы в DELIVERED.
+Тот же формат файла. Переводит товары в `DELIVERED` (поиск по hatch + статус `IN_KG`).
 ```json
 // Response 200
-{ "processedOrders": 15, "updatedOrders": 15,
-  "errors": [{ "row": 8, "code": "ORDER_NOT_FOUND", "message": "..." },
-             { "row": 18, "code": "ORDER_ALREADY_DELIVERED", "message": "..." }] }
+{ "processed": 15,
+  "errors": [{ "row": 8, "code": "PRODUCT_NOT_FOUND", "message": "..." }] }
 // HTTP Errors: 400, 403, 404, 500 (аналогично in-kg)
 ```
 
@@ -381,20 +334,6 @@ Query: `page`, `pageSize`
 ---
 
 ## Отчёты — `/admin/reports`
-
-### GET /admin/reports/orders/summary
-Query: `period` (day|week|month|custom), `from`, `to` (если custom), `branchId` (только SUPER_ADMIN)
-MANAGER → только свой филиал. SUPER_ADMIN → все, если branchId не указан.
-```json
-// Response 200
-{ "items": [{ "date": "2025-11-29", "branch": Branch,
-              "ordersCount": 20, "totalWeight": 150.5, "totalPrice": 120000 }],
-  "total": 31 }
-// Errors: 400 VALIDATION_ERROR, 404 BRANCH_NOT_FOUND
-```
-
-### GET /admin/reports/orders/summary/export
-Query: те же + `format` (xlsx|csv) → бинарный файл
 
 ### GET /admin/reports/users/summary (только SUPER_ADMIN)
 Query: `period`, `from`, `to`
