@@ -1,5 +1,6 @@
 package com.cargoapp.backend.auth.config;
 
+import com.cargoapp.backend.common.constants.ManagerRole;
 import com.cargoapp.backend.managers.entity.ManagerEntity;
 import com.cargoapp.backend.managers.repository.ManagerRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,11 +29,10 @@ public class AdminSeeder implements CommandLineRunner {
         ManagerEntity admin = new ManagerEntity();
         admin.setLogin(adminProperties.getLogin());
         admin.setPasswordHash(passwordEncoder.encode(adminProperties.getPassword()));
-        admin.setPassword(adminProperties.getPassword());  // plain text для отображения в админке
         admin.setFirstName("Super");
         admin.setLastName("Admin");
         admin.setPhone("");
-        admin.setRole("SUPER_ADMIN");
+        admin.setRole(ManagerRole.SUPER_ADMIN.name());
         // branch = null для SUPER_ADMIN — доступ ко всем филиалам
 
         managerRepository.save(admin);

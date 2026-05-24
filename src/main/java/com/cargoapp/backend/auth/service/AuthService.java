@@ -205,6 +205,10 @@ public class AuthService {
         RefreshSessionEntity oldSession = refreshSessionRepository.findByJtiAndRevokedAtIsNull(jti)
                 .orElseThrow(() -> new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Сессия не найдена или отозвана"));
 
+        if (oldSession.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Сессия истекла");
+        }
+
         refreshSessionRepository.revokeByJti(jti, LocalDateTime.now());
 
         UserEntity user = oldSession.getUser();
@@ -232,6 +236,10 @@ public class AuthService {
 
         ManagerRefreshSessionEntity oldSession = managerRefreshSessionRepository.findByJtiAndRevokedAtIsNull(jti)
                 .orElseThrow(() -> new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Сессия не найдена или отозвана"));
+
+        if (oldSession.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Сессия истекла");
+        }
 
         managerRefreshSessionRepository.revokeByJti(jti, LocalDateTime.now());
 
