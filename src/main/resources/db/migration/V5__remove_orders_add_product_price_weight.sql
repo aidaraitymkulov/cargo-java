@@ -11,8 +11,8 @@ DROP INDEX IF EXISTS idx_products_order_id;
 DROP INDEX IF EXISTS idx_orders_user_id;
 DROP INDEX IF EXISTS idx_orders_branch_id;
 
--- Drop orders table
-DROP TABLE IF EXISTS orders;
+-- Drop orders table (CASCADE covers any remaining FKs)
+DROP TABLE IF EXISTS orders CASCADE;
 
 -- Add price and weight to products (optional)
 ALTER TABLE products ADD COLUMN IF NOT EXISTS price  NUMERIC(12, 2);
