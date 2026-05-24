@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -16,7 +17,6 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-
 public class ProductEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -29,8 +29,11 @@ public class ProductEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
-    @Column(name = "order_id")
-    private UUID orderId;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal price;
+
+    @Column(precision = 12, scale = 3)
+    private BigDecimal weight;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

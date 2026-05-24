@@ -9,6 +9,7 @@ import com.cargoapp.backend.managers.dto.UpdateManagerRequest;
 import com.cargoapp.backend.managers.entity.ManagerEntity;
 import com.cargoapp.backend.managers.mapper.ManagerMapper;
 import com.cargoapp.backend.managers.repository.ManagerRepository;
+import com.cargoapp.backend.common.constants.ManagerRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -41,18 +42,17 @@ public class ManagerService {
         ManagerEntity manager = new ManagerEntity();
         manager.setLogin(request.login());
         manager.setPasswordHash(passwordEncoder.encode(request.password()));
-        manager.setPassword(request.password());  // plain text для админки
         manager.setFirstName(request.firstName());
         manager.setLastName(request.lastName());
         manager.setPhone(request.phone());
-        manager.setRole("MANAGER");
+        manager.setRole(ManagerRole.MANAGER.name());
         manager.setBranch(branch);
 
         return managerMapper.toManagerResponse(managerRepository.save(manager));
     }
 
     public List<ManagerResponse> getManagers() {
-        return managerRepository.findAllByRoleNot("SUPER_ADMIN", Sort.by("createdAt").descending())
+        return managerRepository.findAllByRoleNot(ManagerRole.SUPER_ADMIN.name(), Sort.by("createdAt").descending())
                 .stream()
                 .map(managerMapper::toManagerResponse)
                 .toList();
@@ -66,7 +66,7 @@ public class ManagerService {
     public ManagerResponse updateManager(UUID managerId, UpdateManagerRequest request) {
         ManagerEntity manager = findManagerById(managerId);
 
-        if ("SUPER_ADMIN".equals(manager.getRole())) {
+        if (ManagerRole.SUPER_ADMIN.name().equals(manager.getRole())) {
             throw new AppException("FORBIDDEN", HttpStatus.FORBIDDEN, "Нельзя редактировать данные супер-администратора");
         }
 
@@ -79,7 +79,6 @@ public class ManagerService {
 
         if (request.password() != null && !request.password().isBlank()) {
             manager.setPasswordHash(passwordEncoder.encode(request.password()));
-            manager.setPassword(request.password());
         }
 
         if (request.firstName() != null) {
@@ -109,7 +108,7 @@ public class ManagerService {
 
         ManagerEntity manager = findManagerById(managerId);
 
-        if ("SUPER_ADMIN".equals(manager.getRole())) {
+        if (ManagerRole.SUPER_ADMIN.name().equals(manager.getRole())) {
             throw new AppException("FORBIDDEN", HttpStatus.FORBIDDEN, "Нельзя удалить супер-администратора");
         }
 

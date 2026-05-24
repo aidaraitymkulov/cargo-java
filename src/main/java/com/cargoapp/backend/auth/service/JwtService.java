@@ -1,6 +1,7 @@
 package com.cargoapp.backend.auth.service;
 
 import com.cargoapp.backend.auth.config.JwtProperties;
+import com.cargoapp.backend.common.constants.ClientType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -32,7 +33,7 @@ public class JwtService {
     public String generateUserAccessToken(UUID userId, String jti) {
         return Jwts.builder()
                 .subject(userId.toString())
-                .claim("type", "user")
+                .claim("type", ClientType.USER.getValue())
                 .id(jti)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtProperties.getAccessExpirationMs()))
@@ -47,7 +48,7 @@ public class JwtService {
     public String generateManagerAccessToken(UUID managerId, String role, String jti) {
         return Jwts.builder()
                 .subject(managerId.toString())
-                .claim("type", "manager")
+                .claim("type", ClientType.MANAGER.getValue())
                 .claim("role", role)
                 .id(jti)
                 .issuedAt(new Date())

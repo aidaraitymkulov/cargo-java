@@ -16,7 +16,6 @@ public class ManagerMapper {
         return new ManagerResponse(
                 manager.getId(),
                 manager.getLogin(),
-                manager.getPassword(),
                 manager.getFirstName(),
                 manager.getLastName(),
                 manager.getPhone(),

@@ -28,13 +28,6 @@ public class ManagerEntity {
     @Column(nullable = false)
     private String passwordHash;
 
-    /**
-     * Пароль в открытом виде — хранится для отображения в админке.
-     * Обновляется вместе с passwordHash при смене пароля.
-     */
-    @Column(nullable = false)
-    private String password;
-
     @Column(nullable = false)
     private String firstName;
 
