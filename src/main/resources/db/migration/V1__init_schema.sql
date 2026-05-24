@@ -4,9 +4,17 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ====================================================
+-- Переименовать конфликтующие таблицы из старого дампа
+-- (IF EXISTS — безопасно на чистой БД, просто ничего не сделает)
+-- ====================================================
+ALTER TABLE IF EXISTS news             RENAME TO news_old;
+ALTER TABLE IF EXISTS push_tokens      RENAME TO push_tokens_old;
+ALTER TABLE IF EXISTS refresh_sessions RENAME TO refresh_sessions_old;
+
+-- ====================================================
 -- BRANCHES
 -- ====================================================
-CREATE TABLE branches (
+CREATE TABLE IF NOT EXISTS branches (
     id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     address              VARCHAR NOT NULL,
     personal_code_prefix VARCHAR NOT NULL,
@@ -19,15 +27,15 @@ CREATE TABLE branches (
 -- ====================================================
 -- MANAGERS (сотрудники: MANAGER и SUPER_ADMIN)
 -- ====================================================
-CREATE TABLE managers (
+CREATE TABLE IF NOT EXISTS managers (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     login         VARCHAR NOT NULL UNIQUE,
     password_hash VARCHAR NOT NULL,
-    password      VARCHAR NOT NULL,  -- plain text для отображения в админке
+    password      VARCHAR NOT NULL,
     first_name    VARCHAR NOT NULL,
     last_name     VARCHAR NOT NULL,
     phone         VARCHAR NOT NULL,
-    role          VARCHAR NOT NULL,  -- MANAGER / SUPER_ADMIN
+    role          VARCHAR NOT NULL,
     branch_id     UUID REFERENCES branches(id),
     created_at    TIMESTAMP DEFAULT now(),
     updated_at    TIMESTAMP DEFAULT now()
@@ -36,7 +44,7 @@ CREATE TABLE managers (
 -- ====================================================
 -- USERS (мобильные клиенты)
 -- ====================================================
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     login         VARCHAR NOT NULL UNIQUE,
     email         VARCHAR NOT NULL UNIQUE,
@@ -48,7 +56,7 @@ CREATE TABLE users (
     personal_code VARCHAR UNIQUE,
     branch_id     UUID REFERENCES branches(id),
     chat_banned   BOOLEAN   DEFAULT false,
-    status        INT       DEFAULT 0,  -- 0=ACTIVE, 1=INACTIVE, 2=DELETED, 3=PENDING_DELETION
+    status        INT       DEFAULT 0,
     created_at    TIMESTAMP DEFAULT now(),
     updated_at    TIMESTAMP DEFAULT now()
 );
@@ -56,7 +64,7 @@ CREATE TABLE users (
 -- ====================================================
 -- USER PERSONAL CODES (история смены филиалов)
 -- ====================================================
-CREATE TABLE user_personal_codes (
+CREATE TABLE IF NOT EXISTS user_personal_codes (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id       UUID NOT NULL REFERENCES users(id),
     personal_code VARCHAR NOT NULL,
@@ -68,14 +76,14 @@ CREATE TABLE user_personal_codes (
 -- ====================================================
 -- ORDERS
 -- ====================================================
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id    UUID NOT NULL REFERENCES users(id),
     branch_id  UUID NOT NULL REFERENCES branches(id),
     price      NUMERIC(12, 2) DEFAULT 0,
     weight     NUMERIC(12, 3) DEFAULT 0,
     item_count INT            DEFAULT 0,
-    status     VARCHAR NOT NULL,  -- PENDING_PICKUP / DELIVERED
+    status     VARCHAR NOT NULL,
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now()
 );
@@ -83,12 +91,12 @@ CREATE TABLE orders (
 -- ====================================================
 -- PRODUCTS
 -- ====================================================
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     hatch      VARCHAR NOT NULL,
     user_id    UUID NOT NULL REFERENCES users(id),
     order_id   UUID REFERENCES orders(id),
-    status     VARCHAR NOT NULL,  -- IN_CHINA, ON_THE_WAY, IN_KG, DELIVERED
+    status     VARCHAR NOT NULL,
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now()
 );
@@ -96,7 +104,7 @@ CREATE TABLE products (
 -- ====================================================
 -- PRODUCT HISTORIES
 -- ====================================================
-CREATE TABLE product_histories (
+CREATE TABLE IF NOT EXISTS product_histories (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id UUID NOT NULL REFERENCES products(id),
     status     VARCHAR   NOT NULL,
@@ -106,7 +114,7 @@ CREATE TABLE product_histories (
 -- ====================================================
 -- NEWS
 -- ====================================================
-CREATE TABLE news (
+CREATE TABLE IF NOT EXISTS news (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     cover      VARCHAR,
     title      VARCHAR NOT NULL,
@@ -118,7 +126,7 @@ CREATE TABLE news (
 -- ====================================================
 -- PUSH TOKENS
 -- ====================================================
-CREATE TABLE push_tokens (
+CREATE TABLE IF NOT EXISTS push_tokens (
     id         SERIAL PRIMARY KEY,
     user_id    UUID NOT NULL REFERENCES users(id),
     token      TEXT NOT NULL,
@@ -129,7 +137,7 @@ CREATE TABLE push_tokens (
 -- ====================================================
 -- REFRESH SESSIONS (только для users — мобильный клиент)
 -- ====================================================
-CREATE TABLE refresh_sessions (
+CREATE TABLE IF NOT EXISTS refresh_sessions (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID NOT NULL REFERENCES users(id),
     jti         VARCHAR UNIQUE NOT NULL,
@@ -144,7 +152,7 @@ CREATE TABLE refresh_sessions (
 -- ====================================================
 -- MANAGER REFRESH SESSIONS (для managers — веб-клиент)
 -- ====================================================
-CREATE TABLE manager_refresh_sessions (
+CREATE TABLE IF NOT EXISTS manager_refresh_sessions (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     manager_id  UUID NOT NULL REFERENCES managers(id),
     jti         VARCHAR UNIQUE NOT NULL,
@@ -159,7 +167,7 @@ CREATE TABLE manager_refresh_sessions (
 -- ====================================================
 -- CONFIRMATIONS
 -- ====================================================
-CREATE TABLE confirmations (
+CREATE TABLE IF NOT EXISTS confirmations (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code                VARCHAR(4) NOT NULL,
     confirmation_status VARCHAR     NOT NULL,
@@ -172,11 +180,11 @@ CREATE TABLE confirmations (
 -- ====================================================
 -- CHAT MESSAGES
 -- ====================================================
-CREATE TABLE chat_messages (
+CREATE TABLE IF NOT EXISTS chat_messages (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID NOT NULL REFERENCES users(id),
     manager_id  UUID REFERENCES managers(id),
-    sender_type VARCHAR  NOT NULL,  -- USER / MANAGER
+    sender_type VARCHAR  NOT NULL,
     message     TEXT     NOT NULL,
     is_read     BOOLEAN  DEFAULT false,
     created_at  TIMESTAMP DEFAULT now()
@@ -185,9 +193,9 @@ CREATE TABLE chat_messages (
 -- ====================================================
 -- NOTIFICATION LOGS
 -- ====================================================
-CREATE TABLE notification_logs (
+CREATE TABLE IF NOT EXISTS notification_logs (
     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    type           VARCHAR NOT NULL,  -- TEST / BROADCAST / BY_PERSONAL_CODE
+    type           VARCHAR NOT NULL,
     title          VARCHAR NOT NULL,
     body           TEXT    NOT NULL,
     data_json      JSON,
@@ -200,15 +208,15 @@ CREATE TABLE notification_logs (
 -- ====================================================
 -- INDEXES
 -- ====================================================
-CREATE INDEX idx_users_personal_code      ON users(personal_code);
-CREATE INDEX idx_users_branch_id          ON users(branch_id);
-CREATE INDEX idx_managers_branch_id       ON managers(branch_id);
-CREATE INDEX idx_products_user_id         ON products(user_id);
-CREATE INDEX idx_products_order_id        ON products(order_id);
-CREATE INDEX idx_products_hatch           ON products(hatch);
-CREATE INDEX idx_products_status          ON products(status);
-CREATE INDEX idx_orders_user_id           ON orders(user_id);
-CREATE INDEX idx_orders_branch_id         ON orders(branch_id);
-CREATE INDEX idx_refresh_sessions_jti     ON refresh_sessions(jti);
-CREATE INDEX idx_mgr_refresh_sessions_jti ON manager_refresh_sessions(jti);
-CREATE INDEX idx_chat_messages_user_id    ON chat_messages(user_id);
+CREATE INDEX IF NOT EXISTS idx_users_personal_code      ON users(personal_code);
+CREATE INDEX IF NOT EXISTS idx_users_branch_id          ON users(branch_id);
+CREATE INDEX IF NOT EXISTS idx_managers_branch_id       ON managers(branch_id);
+CREATE INDEX IF NOT EXISTS idx_products_user_id         ON products(user_id);
+CREATE INDEX IF NOT EXISTS idx_products_order_id        ON products(order_id);
+CREATE INDEX IF NOT EXISTS idx_products_hatch           ON products(hatch);
+CREATE INDEX IF NOT EXISTS idx_products_status          ON products(status);
+CREATE INDEX IF NOT EXISTS idx_orders_user_id           ON orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_branch_id         ON orders(branch_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_sessions_jti     ON refresh_sessions(jti);
+CREATE INDEX IF NOT EXISTS idx_mgr_refresh_sessions_jti ON manager_refresh_sessions(jti);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_user_id    ON chat_messages(user_id);

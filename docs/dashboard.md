@@ -76,27 +76,11 @@
 
 ---
 
-### GET /admin/dashboard/charts/products/in-china
-
-Количество товаров, получивших статус `IN_CHINA` в каждый день периода.
-
-Источник: `product_histories` где `status = IN_CHINA`.
-
----
-
-### GET /admin/dashboard/charts/products/on-the-way
-
-Количество товаров, получивших статус `ON_THE_WAY` в каждый день периода.
-
-Источник: `product_histories` где `status = ON_THE_WAY`.
-
----
-
 ### GET /admin/dashboard/charts/products/delivered
 
 Количество выданных товаров (`DELIVERED`) в каждый день периода.
 
-Источник: `product_histories` где `status = DELIVERED`.
+Источник: `products.updated_at` где `status = DELIVERED`.
 
 ---
 
