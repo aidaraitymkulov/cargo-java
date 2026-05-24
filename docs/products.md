@@ -4,7 +4,7 @@
 
 Товар (product) — одна физическая посылка клиента. Имеет трекинг-номер (`hatch`) и проходит через статусы от Китая до выдачи. Товары создаются **только через импорт Excel** — нет API для ручного создания.
 
-Вес и цена у товара отсутствуют — они принадлежат заказу (`Order`), который появляется при импорте из КР.
+Цена (`price`) и вес (`weight`) хранятся на товаре и заполняются при KG-импорте. Оба поля опциональны — могут быть `null` для товаров, созданных через CN-импорт.
 
 ---
 
@@ -35,13 +35,14 @@ IN_CHINA → ON_THE_WAY → IN_KG → DELIVERED
   "id": "uuid",
   "hatch": "YT123456789",
   "status": "IN_CHINA",
-  "orderId": null,
+  "price": null,
+  "weight": null,
   "createdAt": "2024-01-15T10:30:00",
   "updatedAt": "2024-01-15T10:30:00"
 }
 ```
 
-`orderId` — `null` пока товар не привязан к заказу (статус `IN_CHINA` или `ON_THE_WAY`).
+`price` и `weight` — `null` для товаров из CN-импорта; заполняются при KG-импорте.
 
 ### ProductAdminResponse (Admin)
 ```json
@@ -52,8 +53,9 @@ IN_CHINA → ON_THE_WAY → IN_KG → DELIVERED
   "firstName": "Иван",
   "lastName": "Петров",
   "personalCode": "AN0001",
-  "orderId": "uuid",
   "status": "IN_KG",
+  "price": 5000.00,
+  "weight": 3.500,
   "createdAt": "2024-01-15T10:30:00",
   "updatedAt": "2024-01-16T08:00:00"
 }
@@ -150,8 +152,6 @@ IN_CHINA → ON_THE_WAY → IN_KG → DELIVERED
     "IN_KG": 2,
     "DELIVERED": 18
   },
-  "activeOrdersCount": 0,
-  "deliveredOrdersCount": 0,
   "lastUpdatedAt": "2024-01-16T08:00:00"
 }
 ```
@@ -159,8 +159,6 @@ IN_CHINA → ON_THE_WAY → IN_KG → DELIVERED
 Все статусы всегда присутствуют в `productsByStatus`, даже если count = 0.
 
 `lastUpdatedAt` — время последнего обновления любого товара пользователя (`null` если товаров нет).
-
-> `activeOrdersCount` и `deliveredOrdersCount` в разработке — временно возвращают `0`.
 
 ---
 
@@ -222,8 +220,9 @@ IN_CHINA → ON_THE_WAY → IN_KG → DELIVERED
    IN_CHINA  ──── cron 24ч ────→  ON_THE_WAY
                                         ↓
                               Импорт KG Excel (in-kg)
+                              (устанавливает price и weight)
                                         ↓
-                                      IN_KG  (создаётся Order)
+                                      IN_KG
                                         ↓
                               Импорт KG Excel (delivered)
                                         ↓
