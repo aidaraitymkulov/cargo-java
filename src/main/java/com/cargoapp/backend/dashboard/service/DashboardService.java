@@ -1,6 +1,7 @@
 package com.cargoapp.backend.dashboard.service;
 
 import com.cargoapp.backend.common.component.BranchResolver;
+import com.cargoapp.backend.common.exception.AppException;
 import com.cargoapp.backend.dashboard.dto.DailyStatResponse;
 import com.cargoapp.backend.dashboard.dto.DashboardSummaryResponse;
 import com.cargoapp.backend.products.entity.ProductStatus;
@@ -8,11 +9,11 @@ import com.cargoapp.backend.products.repository.ProductHistoryRepository;
 import com.cargoapp.backend.products.repository.ProductRepository;
 import com.cargoapp.backend.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -73,6 +74,7 @@ public class DashboardService {
     }
 
     public List<DailyStatResponse> getUsersChart(UUID currentManagerId, UUID branchId, LocalDate from, LocalDate to) {
+        validatePeriod(from, to);
         UUID effectiveBranchId = branchResolver.resolveForManager(currentManagerId, branchId);
         LocalDateTime fromDt = from.atStartOfDay();
         LocalDateTime toDt = to.plusDays(1).atStartOfDay();
@@ -86,6 +88,7 @@ public class DashboardService {
 
     public List<DailyStatResponse> getProductsChart(UUID currentManagerId, UUID branchId,
                                                      ProductStatus status, LocalDate from, LocalDate to) {
+        validatePeriod(from, to);
         UUID effectiveBranchId = branchResolver.resolveForManager(currentManagerId, branchId);
         LocalDateTime fromDt = from.atStartOfDay();
         LocalDateTime toDt = to.plusDays(1).atStartOfDay();
@@ -97,10 +100,21 @@ public class DashboardService {
         return fillDailyStats(rows, from, to);
     }
 
+    private void validatePeriod(LocalDate from, LocalDate to) {
+        if (from.isAfter(to)) {
+            throw new AppException("VALIDATION_ERROR", HttpStatus.BAD_REQUEST,
+                    "Дата начала не может быть позже даты конца");
+        }
+        if (from.plusDays(366).isBefore(to)) {
+            throw new AppException("VALIDATION_ERROR", HttpStatus.BAD_REQUEST,
+                    "Период не может превышать 366 дней");
+        }
+    }
+
     private List<DailyStatResponse> fillDailyStats(List<Object[]> rows, LocalDate from, LocalDate to) {
         Map<LocalDate, Long> countByDate = rows.stream()
                 .collect(Collectors.toMap(
-                        r -> ((Date) r[0]).toLocalDate(),
+                        r -> toLocalDate(r[0]),
                         r -> ((Number) r[1]).longValue()
                 ));
 
@@ -109,5 +123,10 @@ public class DashboardService {
             result.add(new DailyStatResponse(d, countByDate.getOrDefault(d, 0L)));
         }
         return result;
+    }
+
+    private LocalDate toLocalDate(Object raw) {
+        if (raw instanceof java.sql.Date d) return d.toLocalDate();
+        return (LocalDate) raw;
     }
 }
