@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,4 +36,28 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID>, JpaSpec
 
     @Query("SELECT COUNT(u) FROM UserEntity u WHERE u.createdAt >= :from AND u.createdAt < :to")
     long countNewUsers(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query(value = """
+            SELECT CAST(u.created_at AS DATE) AS date, COUNT(*) AS count
+            FROM users u
+            WHERE u.created_at >= :from AND u.created_at < :to
+            GROUP BY CAST(u.created_at AS DATE)
+            ORDER BY CAST(u.created_at AS DATE)
+            """, nativeQuery = true)
+    List<Object[]> countNewUsersByDay(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    @Query(value = """
+            SELECT CAST(u.created_at AS DATE) AS date, COUNT(*) AS count
+            FROM users u
+            WHERE u.branch_id = :branchId
+            AND u.created_at >= :from AND u.created_at < :to
+            GROUP BY CAST(u.created_at AS DATE)
+            ORDER BY CAST(u.created_at AS DATE)
+            """, nativeQuery = true)
+    List<Object[]> countNewUsersByDayAndBranch(
+            @Param("branchId") UUID branchId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
 }
