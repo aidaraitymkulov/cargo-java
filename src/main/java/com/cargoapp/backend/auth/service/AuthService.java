@@ -324,7 +324,17 @@ public class AuthService {
 
     @Transactional
     public void forgotPassword(String email) {
-        userRepository.findByEmail(email).ifPresent(user -> {
+        userRepository.findByEmail(email)
+                .filter(user -> user.getStatus() == UserStatus.ACTIVE)
+                .ifPresent(user -> {
+            passwordResetRepository.findTopByUser_IdOrderByCreatedAtDesc(user.getId())
+                    .ifPresent(last -> {
+                        if (last.getCreatedAt().isAfter(LocalDateTime.now().minusSeconds(60))) {
+                            throw new AppException("RESET_TOO_SOON", HttpStatus.TOO_MANY_REQUESTS,
+                                    "Повторная отправка возможна через 60 секунд");
+                        }
+                    });
+
             passwordResetRepository.invalidateActiveByUserId(user.getId());
 
             String code = String.format("%04d", SECURE_RANDOM.nextInt(10000));
@@ -333,7 +343,6 @@ public class AuthService {
             reset.setUser(user);
             reset.setCode(code);
             reset.setStatus(PasswordResetStatus.PENDING);
-            reset.setAttempts(3);
             reset.setExpiresAt(LocalDateTime.now().plusMinutes(5));
             passwordResetRepository.save(reset);
 
@@ -351,11 +360,11 @@ public class AuthService {
                 .orElseThrow(() -> new AppException("INVALID_RESET_CODE", HttpStatus.BAD_REQUEST, "Нет активного кода сброса пароля"));
 
         if (reset.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new AppException("INVALID_RESET_CODE", HttpStatus.BAD_REQUEST, "Код сброса пароля истёк");
+            throw new AppException("RESET_CODE_EXPIRED", HttpStatus.BAD_REQUEST, "Код сброса пароля истёк");
         }
 
         if (reset.getAttempts() <= 0) {
-            throw new AppException("INVALID_RESET_CODE", HttpStatus.BAD_REQUEST, "Превышено количество попыток");
+            throw new AppException("RESET_CODE_ATTEMPTS_EXCEEDED", HttpStatus.BAD_REQUEST, "Превышено количество попыток");
         }
 
         if (!reset.getCode().equals(request.code())) {

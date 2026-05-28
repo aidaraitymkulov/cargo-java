@@ -35,7 +35,7 @@ public class PasswordResetEntity {
     private PasswordResetStatus status;
 
     @Column(nullable = false)
-    private int attempts;
+    private int attempts = 3;
 
     @Column(nullable = false)
     private LocalDateTime expiresAt;

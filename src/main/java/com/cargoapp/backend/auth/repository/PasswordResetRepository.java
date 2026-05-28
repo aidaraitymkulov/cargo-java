@@ -14,6 +14,7 @@ import java.util.UUID;
 public interface PasswordResetRepository extends JpaRepository<PasswordResetEntity, UUID> {
     Optional<PasswordResetEntity> findByUser_IdAndStatus(UUID userId, PasswordResetStatus status);
     Optional<PasswordResetEntity> findByResetTokenAndStatus(UUID resetToken, PasswordResetStatus status);
+    Optional<PasswordResetEntity> findTopByUser_IdOrderByCreatedAtDesc(UUID userId);
 
     @Transactional
     @Modifying
