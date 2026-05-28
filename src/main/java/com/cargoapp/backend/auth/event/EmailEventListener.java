@@ -16,4 +16,9 @@ public class EmailEventListener {
     public void onConfirmationEmail(ConfirmationEmailEvent event) {
         emailService.sendConfirmationCode(event.email(), event.code());
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onPasswordResetEmail(PasswordResetEmailEvent event) {
+        emailService.sendPasswordResetCode(event.email(), event.code());
+    }
 }

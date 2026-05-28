@@ -3,6 +3,7 @@ package com.cargoapp.backend.auth.controller;
 import com.cargoapp.backend.auth.config.JwtProperties;
 import com.cargoapp.backend.auth.dto.*;
 import com.cargoapp.backend.auth.service.AuthService;
+import org.springframework.http.ResponseEntity;
 import com.cargoapp.backend.common.exception.AppException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -112,6 +113,23 @@ public class AuthController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void resend(@RequestParam String login) {
         authService.resendConfirmation(login);
+    }
+
+    @PostMapping("/forgot-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request.email());
+    }
+
+    @PostMapping("/forgot-password/verify")
+    public ResponseEntity<ResetTokenResponse> verifyResetCode(@Valid @RequestBody VerifyResetCodeRequest request) {
+        return ResponseEntity.ok(authService.verifyResetCode(request));
+    }
+
+    @PostMapping("/forgot-password/reset")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
     }
 
     // =============================================

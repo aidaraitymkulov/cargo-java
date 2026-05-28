@@ -4,10 +4,14 @@ import com.cargoapp.backend.auth.config.JwtProperties;
 import com.cargoapp.backend.auth.dto.*;
 import com.cargoapp.backend.auth.entity.ConfirmationEntity;
 import com.cargoapp.backend.auth.entity.ConfirmationStatus;
+import com.cargoapp.backend.auth.entity.PasswordResetEntity;
+import com.cargoapp.backend.auth.entity.PasswordResetStatus;
 import com.cargoapp.backend.auth.entity.RefreshSessionEntity;
 import com.cargoapp.backend.auth.event.ConfirmationEmailEvent;
+import com.cargoapp.backend.auth.event.PasswordResetEmailEvent;
 import com.cargoapp.backend.auth.mapper.AuthMapper;
 import com.cargoapp.backend.auth.repository.ConfirmationRepository;
+import com.cargoapp.backend.auth.repository.PasswordResetRepository;
 import com.cargoapp.backend.auth.repository.RefreshSessionRepository;
 import com.cargoapp.backend.branches.entity.BranchEntity;
 import com.cargoapp.backend.branches.repository.BranchRepository;
@@ -38,10 +42,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthService {
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     private final UserRepository userRepository;
     private final BranchRepository branchRepository;
     private final UserPersonalCodeRepository userPersonalCodeRepository;
     private final ConfirmationRepository confirmationRepository;
+    private final PasswordResetRepository passwordResetRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshSessionRepository refreshSessionRepository;
     private final ManagerRepository managerRepository;
@@ -92,7 +99,7 @@ public class AuthService {
         branch.setNextSequence(branch.getNextSequence() + 1);
         branchRepository.save(branch);
 
-        String code = String.format("%04d", new SecureRandom().nextInt(10000));
+        String code = String.format("%04d", SECURE_RANDOM.nextInt(10000));
 
         ConfirmationEntity confirmation = new ConfirmationEntity();
         confirmation.setUser(user);
@@ -302,13 +309,86 @@ public class AuthService {
             throw new AppException("RESEND_TOO_SOON", HttpStatus.TOO_MANY_REQUESTS, "Повторная отправка возможна через 60 секунд");
         }
 
-        String newCode = String.format("%04d", new SecureRandom().nextInt(10000));
+        String newCode = String.format("%04d", SECURE_RANDOM.nextInt(10000));
         confirmation.setCode(newCode);
         confirmation.setAttempts(3);
         confirmation.setExpiresAt(LocalDateTime.now().plusMinutes(5));
         confirmation.setLastSentAt(LocalDateTime.now());
         confirmationRepository.save(confirmation);
         eventPublisher.publishEvent(new ConfirmationEmailEvent(user.getEmail(), newCode));
+    }
+
+    // =============================================
+    // FORGOT PASSWORD (только мобильные пользователи)
+    // =============================================
+
+    @Transactional
+    public void forgotPassword(String email) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            passwordResetRepository.invalidateActiveByUserId(user.getId());
+
+            String code = String.format("%04d", SECURE_RANDOM.nextInt(10000));
+
+            PasswordResetEntity reset = new PasswordResetEntity();
+            reset.setUser(user);
+            reset.setCode(code);
+            reset.setStatus(PasswordResetStatus.PENDING);
+            reset.setAttempts(3);
+            reset.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+            passwordResetRepository.save(reset);
+
+            eventPublisher.publishEvent(new PasswordResetEmailEvent(user.getEmail(), code));
+        });
+    }
+
+    @Transactional
+    public ResetTokenResponse verifyResetCode(VerifyResetCodeRequest request) {
+        UserEntity user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new AppException("INVALID_RESET_CODE", HttpStatus.BAD_REQUEST, "Неверный код или email"));
+
+        PasswordResetEntity reset = passwordResetRepository
+                .findByUser_IdAndStatus(user.getId(), PasswordResetStatus.PENDING)
+                .orElseThrow(() -> new AppException("INVALID_RESET_CODE", HttpStatus.BAD_REQUEST, "Нет активного кода сброса пароля"));
+
+        if (reset.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new AppException("INVALID_RESET_CODE", HttpStatus.BAD_REQUEST, "Код сброса пароля истёк");
+        }
+
+        if (reset.getAttempts() <= 0) {
+            throw new AppException("INVALID_RESET_CODE", HttpStatus.BAD_REQUEST, "Превышено количество попыток");
+        }
+
+        if (!reset.getCode().equals(request.code())) {
+            reset.setAttempts(reset.getAttempts() - 1);
+            passwordResetRepository.save(reset);
+            throw new AppException("INVALID_RESET_CODE", HttpStatus.BAD_REQUEST, "Неверный код");
+        }
+
+        UUID resetToken = UUID.randomUUID();
+        reset.setResetToken(resetToken);
+        reset.setStatus(PasswordResetStatus.VERIFIED);
+        reset.setExpiresAt(LocalDateTime.now().plusMinutes(15));
+        passwordResetRepository.save(reset);
+
+        return new ResetTokenResponse(resetToken);
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        PasswordResetEntity reset = passwordResetRepository
+                .findByResetTokenAndStatus(request.resetToken(), PasswordResetStatus.VERIFIED)
+                .orElseThrow(() -> new AppException("INVALID_RESET_TOKEN", HttpStatus.BAD_REQUEST, "Недействительный или использованный токен сброса"));
+
+        if (reset.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new AppException("INVALID_RESET_TOKEN", HttpStatus.BAD_REQUEST, "Токен сброса пароля истёк");
+        }
+
+        UserEntity user = reset.getUser();
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+
+        passwordResetRepository.invalidateActiveByUserId(user.getId());
+        refreshSessionRepository.revokeAllActiveByUserId(user.getId(), LocalDateTime.now());
     }
 
     // =============================================

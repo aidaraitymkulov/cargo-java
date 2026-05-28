@@ -19,6 +19,10 @@
     {
       "key": "branchId",
       "value": ""
+    },
+    {
+      "key": "resetToken",
+      "value": ""
     }
   ],
   "item": [
@@ -144,6 +148,68 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"login\": \"john_doe\",\n  \"code\": \"1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Forgot Password — Request Code",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/forgot-password",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Forgot Password — Verify Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.collectionVariables.set('resetToken', res.resetToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/forgot-password/verify",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Forgot Password — Reset Password",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/forgot-password/reset",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resetToken\": \"{{resetToken}}\",\n  \"newPassword\": \"newSecret123\"\n}"
             }
           }
         }

@@ -104,38 +104,44 @@ Base URL: `https://api.adesexpress.com`
 { "success": true }
 ```
 
-### POST /auth/forgot-password/request
+### POST /auth/confirm
 ```json
 // Request
-{ "login": "user@example.com" }
-// Response 200
-{ "success": true }
+{ "login": "ivan_petrov", "code": "4821" }
+// Response 204
+// Errors: 404 USER_NOT_FOUND, 400 INVALID_CONFIRMATION_CODE
 ```
 
-### POST /auth/forgot-password/confirm
+### POST /auth/resend
+```
+// Query: ?login=ivan_petrov
+// Response 204
+// Errors: 404 USER_NOT_FOUND, 400 INVALID_CONFIRMATION_CODE, 429 RESEND_TOO_SOON
+```
+
+### POST /auth/forgot-password
 ```json
 // Request
-{ "code": "123456", "newPassword": "NewP@ssw0rd" }
-// Response 200
-{ "success": true }
-// Errors: 400 VALIDATION_ERROR | INVALID_CONFIRMATION_CODE
+{ "email": "ivan@example.com" }
+// Response 204
+// Errors: 404 USER_NOT_FOUND, 400 VALIDATION_ERROR
 ```
 
-### POST /auth/confirm-email
+### POST /auth/forgot-password/verify
 ```json
 // Request
-{ "code": "123456" }
+{ "email": "ivan@example.com", "code": "4821" }
 // Response 200
-{ "success": true }
+{ "resetToken": "uuid" }
+// Errors: 404 USER_NOT_FOUND, 400 INVALID_RESET_CODE
 ```
 
-### POST /auth/confirm-email/resend
-Без тела. Требует авторизации.
-Защита: не чаще раз в 60 сек, 3 попытки.
+### POST /auth/forgot-password/reset
 ```json
-// Response 200
-{ "success": true }
-// Errors: 400 TOO_MANY_REQUESTS | RESEND_TOO_SOON
+// Request
+{ "resetToken": "uuid", "newPassword": "NewP@ssw0rd" }
+// Response 204
+// Errors: 400 INVALID_RESET_TOKEN | VALIDATION_ERROR
 ```
 
 ---
