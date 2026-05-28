@@ -3,7 +3,6 @@ package com.cargoapp.backend.auth.controller;
 import com.cargoapp.backend.auth.config.JwtProperties;
 import com.cargoapp.backend.auth.dto.*;
 import com.cargoapp.backend.auth.service.AuthService;
-import org.springframework.http.ResponseEntity;
 import com.cargoapp.backend.common.exception.AppException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
@@ -48,8 +48,7 @@ public class AuthController {
         }
 
         // mobile (default)
-        AuthResponse auth = authService.loginUser(request);
-        return auth;
+        return authService.loginUser(request);
     }
 
     @PostMapping("/logout")
@@ -61,7 +60,7 @@ public class AuthController {
             HttpServletResponse response
     ) {
         if (isWebClient(clientType)) {
-            String refreshToken = extractCookie(request, "refreshToken");
+            String refreshToken = extractRefreshCookie(request);
             if (refreshToken != null) {
                 authService.logout(refreshToken);
             }
@@ -87,7 +86,7 @@ public class AuthController {
             HttpServletResponse response
     ) {
         if (isWebClient(clientType)) {
-            String refreshToken = extractCookie(request, "refreshToken");
+            String refreshToken = extractRefreshCookie(request);
             if (refreshToken == null) {
                 throw new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Refresh токен отсутствует");
             }
@@ -158,10 +157,10 @@ public class AuthController {
                 .build();
     }
 
-    private String extractCookie(HttpServletRequest request, String name) {
+    private String extractRefreshCookie(HttpServletRequest request) {
         if (request.getCookies() == null) return null;
         return Arrays.stream(request.getCookies())
-                .filter(c -> name.equals(c.getName()))
+                .filter(c -> "refreshToken".equals(c.getName()))
                 .map(jakarta.servlet.http.Cookie::getValue)
                 .findFirst()
                 .orElse(null);
