@@ -249,6 +249,84 @@ Refresh token берётся из cookie. После logout cookies очищаю
 
 ---
 
+---
+
+### POST /auth/forgot-password
+Запрос кода сброса пароля. Только для мобильных пользователей.
+
+**Request:**
+```json
+{ "email": "ivan@example.com" }
+```
+
+**Response:** `204 No Content`
+
+**Побочные эффекты:**
+- На email отправляется 4-значный код (TTL 5 минут, 3 попытки)
+- Предыдущий незавершённый запрос инвалидируется
+
+**Ошибки:**
+```
+404 USER_NOT_FOUND   — пользователь с таким email не найден
+400 VALIDATION_ERROR — невалидный email
+```
+
+---
+
+### POST /auth/forgot-password/verify
+Проверка кода и получение токена для смены пароля.
+
+**Request:**
+```json
+{
+  "email": "ivan@example.com",
+  "code": "4821"
+}
+```
+
+**Response `200 OK`:**
+```json
+{ "resetToken": "uuid" }
+```
+
+**Логика:**
+- Код живёт 5 минут, 3 попытки
+- При успехе выдаётся одноразовый `resetToken` (UUID), действителен 15 минут
+
+**Ошибки:**
+```
+404 USER_NOT_FOUND    — пользователь не найден
+400 INVALID_RESET_CODE — нет активного кода / истёк / неверный / попытки исчерпаны
+```
+
+---
+
+### POST /auth/forgot-password/reset
+Установка нового пароля. Завершает flow.
+
+**Request:**
+```json
+{
+  "resetToken": "uuid",
+  "newPassword": "newSecret123"
+}
+```
+
+**Response:** `204 No Content`
+
+**Побочные эффекты:**
+- Пароль обновляется
+- Все активные refresh-сессии пользователя отзываются
+- `resetToken` помечается как использованный
+
+**Ошибки:**
+```
+400 INVALID_RESET_TOKEN — токен недействителен, истёк или уже использован
+400 VALIDATION_ERROR    — newPassword короче 6 символов
+```
+
+---
+
 ## Флоу регистрации (Mobile)
 
 ```
@@ -264,6 +342,14 @@ Refresh token берётся из cookie. После logout cookies очищаю
 2. ...accessToken истёк...
 3. POST /auth/refresh  →  новый accessToken + новый refreshToken
 4. POST /auth/logout   →  refresh-сессия отозвана
+```
+
+## Флоу сброса пароля (Mobile)
+
+```
+1. POST /auth/forgot-password          →  204, письмо с кодом на email
+2. POST /auth/forgot-password/verify   →  200, { resetToken }
+3. POST /auth/forgot-password/reset    →  204, пароль изменён, сессии отозваны
 ```
 
 ## Флоу входа (Web)
