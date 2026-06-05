@@ -209,6 +209,31 @@
 
 ---
 
+### GET /admin/users/search
+Поиск пользователей по имени, фамилии или personalCode.
+
+**Query параметры:**
+
+| Параметр | Тип | Описание |
+|---|---|---|
+| `q` | string | Строка поиска (имя, фамилия или personalCode) |
+| `page` | int | Номер страницы, default `1` |
+| `pageSize` | int | Размер страницы, default `20` |
+
+**Ограничение по роли:** `MANAGER` видит только пользователей своего филиала. `SUPER_ADMIN` ищет по всем филиалам.
+
+**Response `200 OK`:**
+```json
+{
+  "items": [ UserResponse ],
+  "page": 1,
+  "pageSize": 20,
+  "total": 5
+}
+```
+
+---
+
 ### GET /admin/users/stats
 Статистика пользователей.
 
@@ -244,7 +269,7 @@
 
 ---
 
-### DELETE /admin/users/{userId}
+### DELETE /admin/users/delete/{userId}
 Жёсткое удаление пользователя администратором. Устанавливает статус `DELETED` (без ожидания 30 дней).
 
 **Response `204 No Content`**

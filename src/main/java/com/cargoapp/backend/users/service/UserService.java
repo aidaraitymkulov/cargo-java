@@ -142,6 +142,19 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public PagedResponse<UserResponse> searchUsers(UUID currentManagerId, String query, int page, int pageSize) {
+        UUID effectiveBranchId = branchResolver.resolveForManager(currentManagerId, null);
+        var pageable = PageRequest.of(page - 1, pageSize, Sort.by("createdAt").descending());
+        var spec = UserSpecification.search(query, effectiveBranchId);
+        Page<UserEntity> result = userRepository.findAll(spec, pageable);
+
+        List<UserResponse> items = result.getContent().stream()
+                .map(userMapper::toUserResponse)
+                .toList();
+
+        return new PagedResponse<>(items, page, pageSize, result.getTotalElements());
+    }
+
     public PagedResponse<UserResponse> getUsers(UUID currentManagerId, String prefix, String code, UUID branchId, int page, int pageSize) {
         UUID effectiveBranchId = branchResolver.resolveForManager(currentManagerId, branchId);
         var pageable = PageRequest.of(page - 1, pageSize, Sort.by("createdAt").descending());
