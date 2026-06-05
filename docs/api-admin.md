@@ -39,9 +39,12 @@ Base URL: `https://api.adesexpress.com/admin`
 {
   "id": "uuid", "address": "г. Бишкек, Анкара-10",
   "personalCodePrefix": "AN", "isActive": true,
+  "latitude": 42.8746, "longitude": 74.5698,
+  "photoUrl": "/uploads/branches/uuid_photo.jpg",
   "nextSequence": 42, "createdAt": "ISO", "updatedAt": "ISO"
 }
 ```
+`latitude`, `longitude`, `photoUrl` — опциональны, могут быть `null`.
 
 ### Product
 ```json
@@ -110,28 +113,34 @@ Response 204. Errors: 401, 403, 404 NOT_FOUND, 409 CONFLICT (нельзя уда
 ## Филиалы — `/admin/branches` (SUPER_ADMIN)
 
 ### POST /admin/branches
+Body: `multipart/form-data`
+- `address` (text, обязательно)
+- `personalCodePrefix` (text, обязательно)
+- `latitude` (text/number, опционально)
+- `longitude` (text/number, опционально)
+- `photo` (file, опционально, только image/*)
 ```json
-// Request
-{ "address": "г. Бишкек, Анкара-10", "personalCodePrefix": "D" }
 // Response 201: Branch
 // Errors: 400 VALIDATION_ERROR, 409 CONFLICT (prefix занят)
 ```
 
 ### GET /admin/branches
 ```json
-// Response 200
-{ "items": [Branch], "page": 1, "pageSize": 50, "total": 5 }
+// Response 200: [Branch]
 ```
 
 ### GET /admin/branches/{branchId} → Branch
 Errors: 404 BRANCH_NOT_FOUND
 
 ### PATCH /admin/branches/{branchId}
+Body: `multipart/form-data` (все поля опциональны)
+- `address` (text)
+- `latitude` (text/number)
+- `longitude` (text/number)
+- `photo` (file, только image/*) — если передан, старый файл удаляется
 ```json
-// Request (все опциональные)
-{ "address": "...", "personalCodePrefix": "AN", "isActive": true }
 // Response 200: Branch
-// Errors: 404 BRANCH_NOT_FOUND, 409 CONFLICT
+// Errors: 404 BRANCH_NOT_FOUND
 ```
 
 ### PATCH /admin/branches/{branchId}/activate → Branch

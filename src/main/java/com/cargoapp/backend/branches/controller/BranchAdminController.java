@@ -4,15 +4,18 @@ import com.cargoapp.backend.branches.dto.BranchResponse;
 import com.cargoapp.backend.branches.dto.CreateBranchRequest;
 import com.cargoapp.backend.branches.dto.UpdateBranchRequest;
 import com.cargoapp.backend.branches.service.BranchService;
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
 
+@Validated
 @RestController
 @RequestMapping("/admin/branches")
 @RequiredArgsConstructor
@@ -31,15 +34,27 @@ public class BranchAdminController {
         return branchService.getById(id);
     }
 
-    @PostMapping
+    @PostMapping(consumes = "multipart/form-data")
     @ResponseStatus(HttpStatus.CREATED)
-    public BranchResponse create(@RequestBody @Valid CreateBranchRequest request) {
-        return branchService.create(request);
+    public BranchResponse create(
+            @RequestParam @NotBlank String address,
+            @RequestParam @NotBlank String personalCodePrefix,
+            @RequestParam(required = false) Double latitude,
+            @RequestParam(required = false) Double longitude,
+            @RequestPart(value = "photo", required = false) MultipartFile photo
+    ) {
+        return branchService.create(new CreateBranchRequest(address, personalCodePrefix, latitude, longitude), photo);
     }
 
-    @PatchMapping("/{id}")
-    public BranchResponse update(@PathVariable UUID id, @RequestBody UpdateBranchRequest request) {
-        return branchService.update(id, request);
+    @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
+    public BranchResponse update(
+            @PathVariable UUID id,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) Double latitude,
+            @RequestParam(required = false) Double longitude,
+            @RequestPart(value = "photo", required = false) MultipartFile photo
+    ) {
+        return branchService.update(id, new UpdateBranchRequest(address, latitude, longitude), photo);
     }
 
     @PatchMapping("/{id}/activate")

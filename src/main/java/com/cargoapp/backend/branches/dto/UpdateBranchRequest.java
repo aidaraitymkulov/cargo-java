@@ -1,6 +1,8 @@
 package com.cargoapp.backend.branches.dto;
 
 public record UpdateBranchRequest(
-        String address
+        String address,
+        Double latitude,
+        Double longitude
 ) {
 }

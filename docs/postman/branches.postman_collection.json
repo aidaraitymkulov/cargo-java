@@ -18,7 +18,7 @@
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/branches",
-            "description": "Список активных филиалов. Без авторизации. Используется на экране регистрации."
+            "description": "Список активных филиалов. Без авторизации. Возвращает latitude, longitude, photoUrl для отображения на карте."
           }
         }
       ]
@@ -47,14 +47,17 @@
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/admin/branches",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"address\": \"г. Бишкек, ул. Манаса 40\",\n  \"personalCodePrefix\": \"AN\"\n}"
+              "mode": "formdata",
+              "formdata": [
+                { "key": "address", "value": "г. Бишкек, ул. Манаса 40", "type": "text" },
+                { "key": "personalCodePrefix", "value": "AN", "type": "text" },
+                { "key": "latitude", "value": "42.8746", "type": "text" },
+                { "key": "longitude", "value": "74.5698", "type": "text" },
+                { "key": "photo", "type": "file", "src": "" }
+              ]
             },
-            "description": "Создать новый филиал. SUPER_ADMIN."
+            "description": "Создать новый филиал. SUPER_ADMIN. latitude, longitude, photo — опциональны."
           }
         },
         {
@@ -62,14 +65,16 @@
           "request": {
             "method": "PATCH",
             "url": "{{baseUrl}}/admin/branches/{{branchId}}",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"address\": \"г. Бишкек, ул. Чуй 123\"\n}"
+              "mode": "formdata",
+              "formdata": [
+                { "key": "address", "value": "г. Бишкек, ул. Чуй 123", "type": "text" },
+                { "key": "latitude", "value": "42.8746", "type": "text" },
+                { "key": "longitude", "value": "74.5698", "type": "text" },
+                { "key": "photo", "type": "file", "src": "" }
+              ]
             },
-            "description": "Обновить адрес филиала. SUPER_ADMIN."
+            "description": "Обновить филиал. SUPER_ADMIN. Все поля опциональны. Если photo передан — заменяет старый."
           }
         },
         {

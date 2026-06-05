@@ -8,6 +8,9 @@ public record CreateBranchRequest(
         String address,
 
         @NotBlank(message = "Префикс обязателен")
-        String personalCodePrefix
+        String personalCodePrefix,
+
+        Double latitude,
+        Double longitude
 ) {
 }

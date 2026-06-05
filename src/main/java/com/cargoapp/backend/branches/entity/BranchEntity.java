@@ -32,6 +32,10 @@ public class BranchEntity {
     private boolean active = true;
     private int nextSequence = 1;
 
+    private Double latitude;
+    private Double longitude;
+    private String photoUrl;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
