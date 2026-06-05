@@ -32,6 +32,16 @@ public class UserAdminController {
         return userService.getUsers(currentManagerId, prefix, code, branchId, page, pageSize);
     }
 
+    @GetMapping("/search")
+    public PagedResponse<UserResponse> searchUsers(
+            @CurrentUserId UUID currentManagerId,
+            @RequestParam String q,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize
+    ) {
+        return userService.searchUsers(currentManagerId, q, page, pageSize);
+    }
+
     @GetMapping("/stats")
     public UserStatsResponse getUserStats(
             @CurrentUserId UUID currentManagerId,
@@ -45,7 +55,7 @@ public class UserAdminController {
         return userService.getUserById(userId);
     }
 
-    @DeleteMapping("/{userId}")
+    @DeleteMapping("/delete/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable UUID userId) {
         userService.deleteUser(userId);
