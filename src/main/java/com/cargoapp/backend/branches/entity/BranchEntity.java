@@ -28,9 +28,13 @@ public class BranchEntity {
     @Column(nullable = false, unique = true)
     private String personalCodePrefix;
 
-    @Column(name = "is_active", nullable = false)
-    private boolean active = true;
     private int nextSequence = 1;
+
+    private Double latitude;
+    private Double longitude;
+    private String photoUrl;
+    private String phone;
+    private String workingHours;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
