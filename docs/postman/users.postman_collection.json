@@ -151,10 +151,27 @@
           }
         },
         {
-          "name": "DELETE /admin/users/:id",
+          "name": "GET /admin/users/search",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/search?q=Айдар&page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "search"],
+              "query": [
+                { "key": "q", "value": "Айдар" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            },
+            "description": "Поиск по имени, фамилии или personalCode. MANAGER видит только свой филиал."
+          }
+        },
+        {
+          "name": "DELETE /admin/users/delete/:id",
           "request": {
             "method": "DELETE",
-            "url": "{{baseUrl}}/admin/users/{{userId}}",
+            "url": "{{baseUrl}}/admin/users/delete/{{userId}}",
             "description": "Удалить пользователя (статус → DELETED). MANAGER + SUPER_ADMIN."
           }
         },

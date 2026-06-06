@@ -17,7 +17,7 @@ public class BranchMobileController {
     private final BranchService branchService;
 
     @GetMapping
-    public List<BranchResponse> getAllActive() {
-        return branchService.getAllActive();
+    public List<BranchResponse> getAll() {
+        return branchService.getAll();
     }
 }

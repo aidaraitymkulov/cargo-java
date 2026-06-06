@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,24 +32,22 @@ public class BranchAdminController {
         return branchService.getById(id);
     }
 
-    @PostMapping
+    @PostMapping(consumes = "multipart/form-data")
     @ResponseStatus(HttpStatus.CREATED)
-    public BranchResponse create(@RequestBody @Valid CreateBranchRequest request) {
-        return branchService.create(request);
+    public BranchResponse create(
+            @ModelAttribute @Valid CreateBranchRequest request,
+            @RequestPart(value = "photo", required = false) MultipartFile photo
+    ) {
+        return branchService.create(request, photo);
     }
 
-    @PatchMapping("/{id}")
-    public BranchResponse update(@PathVariable UUID id, @RequestBody UpdateBranchRequest request) {
-        return branchService.update(id, request);
+    @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
+    public BranchResponse update(
+            @PathVariable UUID id,
+            @ModelAttribute UpdateBranchRequest request,
+            @RequestPart(value = "photo", required = false) MultipartFile photo
+    ) {
+        return branchService.update(id, request, photo);
     }
 
-    @PatchMapping("/{id}/activate")
-    public BranchResponse activate(@PathVariable UUID id) {
-        return branchService.activate(id);
-    }
-
-    @PatchMapping("/{id}/deactivate")
-    public BranchResponse deactivate(@PathVariable UUID id) {
-        return branchService.deactivate(id);
-    }
 }

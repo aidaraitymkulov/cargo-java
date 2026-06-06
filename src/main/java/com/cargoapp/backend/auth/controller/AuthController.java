@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
@@ -47,8 +48,7 @@ public class AuthController {
         }
 
         // mobile (default)
-        AuthResponse auth = authService.loginUser(request);
-        return auth;
+        return authService.loginUser(request);
     }
 
     @PostMapping("/logout")
@@ -60,7 +60,7 @@ public class AuthController {
             HttpServletResponse response
     ) {
         if (isWebClient(clientType)) {
-            String refreshToken = extractCookie(request, "refreshToken");
+            String refreshToken = extractRefreshCookie(request);
             if (refreshToken != null) {
                 authService.logout(refreshToken);
             }
@@ -86,7 +86,7 @@ public class AuthController {
             HttpServletResponse response
     ) {
         if (isWebClient(clientType)) {
-            String refreshToken = extractCookie(request, "refreshToken");
+            String refreshToken = extractRefreshCookie(request);
             if (refreshToken == null) {
                 throw new AppException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED, "Refresh токен отсутствует");
             }
@@ -112,6 +112,23 @@ public class AuthController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void resend(@RequestParam String login) {
         authService.resendConfirmation(login);
+    }
+
+    @PostMapping("/forgot-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request.email());
+    }
+
+    @PostMapping("/forgot-password/verify")
+    public ResponseEntity<ResetTokenResponse> verifyResetCode(@Valid @RequestBody VerifyResetCodeRequest request) {
+        return ResponseEntity.ok(authService.verifyResetCode(request));
+    }
+
+    @PostMapping("/forgot-password/reset")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
     }
 
     // =============================================
@@ -140,10 +157,10 @@ public class AuthController {
                 .build();
     }
 
-    private String extractCookie(HttpServletRequest request, String name) {
+    private String extractRefreshCookie(HttpServletRequest request) {
         if (request.getCookies() == null) return null;
         return Arrays.stream(request.getCookies())
-                .filter(c -> name.equals(c.getName()))
+                .filter(c -> "refreshToken".equals(c.getName()))
                 .map(jakarta.servlet.http.Cookie::getValue)
                 .findFirst()
                 .orElse(null);
