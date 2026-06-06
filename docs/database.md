@@ -141,14 +141,25 @@
 
 ---
 
+### chat_rooms
+| Поле | Тип | Описание |
+|---|---|---|
+| id | uuid PK | |
+| user_id | uuid FK→users | Пользователь-владелец |
+| branch_id | uuid FK→branches | Филиал чата |
+| created_at | timestamp | |
+| updated_at | timestamp | |
+
+UNIQUE (user_id, branch_id) — у пользователя один чат на филиал.
+
 ### chat_messages
 | Поле | Тип | Описание |
 |---|---|---|
 | id | uuid PK | |
-| user_id | uuid FK→users | Всегда клиент |
-| manager_id | uuid FK→users NULLABLE | null если отправитель — клиент |
+| chat_room_id | uuid FK→chat_rooms | Комната чата |
 | sender_type | varchar | `USER` или `MANAGER` |
-| message | text | |
+| sender_id | uuid | ID отправителя (user или manager) |
+| content | text | Текст сообщения |
 | is_read | boolean default false | |
 | created_at | timestamp | |
 
@@ -180,7 +191,8 @@ product_histories → products
 refresh_sessions → users
 confirmations → users
 push_tokens → users
-chat_messages → users (×2: user_id, manager_id)
+chat_rooms → users, branches  (many-to-one)
+chat_messages → chat_rooms    (many-to-one)
 notification_logs → users (×2: target_user_id, created_by_id)
 ```
 

@@ -93,6 +93,12 @@
             <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- WebSocket + STOMP -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
         <!-- Apache POI — Excel import -->
         <dependency>
             <groupId>org.apache.poi</groupId>
