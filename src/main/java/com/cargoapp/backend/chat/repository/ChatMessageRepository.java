@@ -21,7 +21,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessageEntity, 
     @Query("SELECT COUNT(m) FROM ChatMessageEntity m WHERE m.chatRoom.id = :roomId AND m.senderType = :senderType AND m.isRead = false")
     long countUnreadByRoomAndSenderType(@Param("roomId") UUID roomId, @Param("senderType") SenderType senderType);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE ChatMessageEntity m SET m.isRead = true WHERE m.chatRoom.id = :roomId AND m.senderType = :senderType AND m.isRead = false")
     void markAllAsReadByRoomAndSenderType(@Param("roomId") UUID roomId, @Param("senderType") SenderType senderType);
 

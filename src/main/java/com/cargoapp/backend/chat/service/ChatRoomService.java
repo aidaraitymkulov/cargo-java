@@ -64,6 +64,9 @@ public class ChatRoomService {
         if (ManagerRole.SUPER_ADMIN.name().equals(manager.getRole())) {
             rooms = chatRoomRepository.findAll();
         } else {
+            if (manager.getBranch() == null) {
+                throw new AppException("MANAGER_NO_BRANCH", HttpStatus.BAD_REQUEST, "Менеджер не привязан к филиалу");
+            }
             rooms = chatRoomRepository.findByBranchId(manager.getBranch().getId());
         }
 
@@ -78,17 +81,23 @@ public class ChatRoomService {
                 .orElseThrow(() -> new AppException("CHAT_ROOM_NOT_FOUND", HttpStatus.NOT_FOUND, "Чат не найден"));
     }
 
+    @Transactional(readOnly = true)
     public void validateUserAccess(ChatRoomEntity room, UUID userId) {
         if (!room.getUser().getId().equals(userId)) {
             throw new AppException("FORBIDDEN", HttpStatus.FORBIDDEN, "Нет доступа к этому чату");
         }
     }
 
+    @Transactional(readOnly = true)
     public void validateManagerAccess(ChatRoomEntity room, UUID managerId) {
         ManagerEntity manager = findManager(managerId);
-        if (!ManagerRole.SUPER_ADMIN.name().equals(manager.getRole())
-                && !room.getBranch().getId().equals(manager.getBranch().getId())) {
-            throw new AppException("FORBIDDEN", HttpStatus.FORBIDDEN, "Нет доступа к этому чату");
+        if (!ManagerRole.SUPER_ADMIN.name().equals(manager.getRole())) {
+            if (manager.getBranch() == null) {
+                throw new AppException("MANAGER_NO_BRANCH", HttpStatus.BAD_REQUEST, "Менеджер не привязан к филиалу");
+            }
+            if (!room.getBranch().getId().equals(manager.getBranch().getId())) {
+                throw new AppException("FORBIDDEN", HttpStatus.FORBIDDEN, "Нет доступа к этому чату");
+            }
         }
     }
 
@@ -97,22 +106,10 @@ public class ChatRoomService {
 
         ChatMessageResponse lastMessage = chatMessageRepository
                 .findTopByChatRoomIdOrderByCreatedAtDesc(room.getId())
-                .map(msg -> chatMapper.toMessageResponse(msg, resolveSenderName(msg.getSenderType(), msg.getSenderId())))
+                .map(msg -> chatMapper.toMessageResponse(msg))
                 .orElse(null);
 
         return chatMapper.toRoomResponse(room, unreadCount, lastMessage);
-    }
-
-    private String resolveSenderName(SenderType senderType, UUID senderId) {
-        if (senderType == SenderType.USER) {
-            return userRepository.findById(senderId)
-                    .map(u -> u.getFirstName() + " " + u.getLastName())
-                    .orElse("Удалённый пользователь");
-        } else {
-            return managerRepository.findById(senderId)
-                    .map(m -> m.getFirstName() + " " + m.getLastName())
-                    .orElse("Менеджер");
-        }
     }
 
     private ManagerEntity findManager(UUID managerId) {

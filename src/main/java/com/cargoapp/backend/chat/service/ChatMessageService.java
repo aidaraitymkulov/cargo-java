@@ -58,7 +58,7 @@ public class ChatMessageService {
         message.setContent(content);
 
         ChatMessageEntity saved = chatMessageRepository.save(message);
-        return chatMapper.toMessageResponse(saved, resolveSenderName(senderType, senderId));
+        return chatMapper.toMessageResponse(saved);
     }
 
     @Transactional(readOnly = true)
@@ -67,7 +67,7 @@ public class ChatMessageService {
         var result = chatMessageRepository.findByChatRoomId(roomId, pageable);
 
         var messages = result.getContent().stream()
-                .map(msg -> chatMapper.toMessageResponse(msg, resolveSenderName(msg.getSenderType(), msg.getSenderId())))
+                .map(msg -> chatMapper.toMessageResponse(msg))
                 .toList();
 
         return new PagedResponse<>(messages, page, pageSize, result.getTotalElements());
@@ -94,21 +94,13 @@ public class ChatMessageService {
         if (ManagerRole.SUPER_ADMIN.name().equals(manager.getRole())) {
             count = chatMessageRepository.countUnreadForAllBranches();
         } else {
+            if (manager.getBranch() == null) {
+                throw new AppException("MANAGER_NO_BRANCH", HttpStatus.BAD_REQUEST, "Менеджер не привязан к филиалу");
+            }
             count = chatMessageRepository.countUnreadForBranch(manager.getBranch().getId());
         }
 
         return new UnreadCountResponse(count);
     }
 
-    private String resolveSenderName(SenderType senderType, UUID senderId) {
-        if (senderType == SenderType.USER) {
-            return userRepository.findById(senderId)
-                    .map(u -> u.getFirstName() + " " + u.getLastName())
-                    .orElse("Удалённый пользователь");
-        } else {
-            return managerRepository.findById(senderId)
-                    .map(m -> m.getFirstName() + " " + m.getLastName())
-                    .orElse("Менеджер");
-        }
-    }
 }
