@@ -38,13 +38,14 @@ Base URL: `https://api.adesexpress.com/admin`
 ```json
 {
   "id": "uuid", "address": "г. Бишкек, Анкара-10",
-  "personalCodePrefix": "AN", "isActive": true,
+  "personalCodePrefix": "AN",
   "latitude": 42.8746, "longitude": 74.5698,
   "photoUrl": "/uploads/branches/uuid_photo.jpg",
+  "phone": "+996312000000", "workingHours": "Пн-Пт 09:00-18:00",
   "nextSequence": 42, "createdAt": "ISO", "updatedAt": "ISO"
 }
 ```
-`latitude`, `longitude`, `photoUrl` — опциональны, могут быть `null`.
+`latitude`, `longitude`, `photoUrl`, `phone`, `workingHours` — опциональны, могут быть `null`.
 
 ### Product
 ```json
@@ -143,9 +144,6 @@ Body: `multipart/form-data` (все поля опциональны)
 // Errors: 404 BRANCH_NOT_FOUND
 ```
 
-### PATCH /admin/branches/{branchId}/activate → Branch
-### PATCH /admin/branches/{branchId}/deactivate → Branch
-Без тела. Errors: 404 BRANCH_NOT_FOUND
 
 ---
 

@@ -12,10 +12,11 @@ public class BranchMapper {
                 branch.getId(),
                 branch.getAddress(),
                 branch.getPersonalCodePrefix(),
-                branch.isActive(),
                 branch.getLatitude(),
                 branch.getLongitude(),
-                branch.getPhotoUrl()
+                branch.getPhotoUrl(),
+                branch.getPhone(),
+                branch.getWorkingHours()
         );
     }
 }

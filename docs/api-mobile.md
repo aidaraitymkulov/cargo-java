@@ -27,8 +27,14 @@ Base URL: `https://api.adesexpress.com`
 
 ### Branch
 ```json
-{ "id": "uuid", "address": "г. Бишкек, Анкара-10", "personalCodePrefix": "AN", "isActive": true }
+{
+  "id": "uuid", "address": "г. Бишкек, Анкара-10", "personalCodePrefix": "AN",
+  "latitude": 42.8746, "longitude": 74.5698,
+  "photoUrl": "/uploads/branches/uuid_photo.jpg",
+  "phone": "+996312000000", "workingHours": "Пн-Пт 09:00-18:00"
+}
 ```
+`latitude`, `longitude`, `photoUrl`, `phone`, `workingHours` — опциональны, могут быть `null`.
 
 ### Product
 ```json

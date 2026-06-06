@@ -11,6 +11,8 @@ public record CreateBranchRequest(
         String personalCodePrefix,
 
         Double latitude,
-        Double longitude
+        Double longitude,
+        String phone,
+        String workingHours
 ) {
 }

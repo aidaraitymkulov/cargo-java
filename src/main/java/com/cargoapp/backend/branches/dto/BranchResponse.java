@@ -6,9 +6,10 @@ public record BranchResponse(
         UUID id,
         String address,
         String personalCodePrefix,
-        boolean isActive,
         Double latitude,
         Double longitude,
-        String photoUrl
+        String photoUrl,
+        String phone,
+        String workingHours
 ) {
 }

@@ -18,7 +18,7 @@
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/branches",
-            "description": "Список активных филиалов. Без авторизации. Возвращает latitude, longitude, photoUrl для отображения на карте."
+            "description": "Список всех филиалов. Без авторизации. Возвращает latitude, longitude, photoUrl, phone, workingHours для отображения на карте."
           }
         }
       ]
@@ -54,10 +54,12 @@
                 { "key": "personalCodePrefix", "value": "AN", "type": "text" },
                 { "key": "latitude", "value": "42.8746", "type": "text" },
                 { "key": "longitude", "value": "74.5698", "type": "text" },
+                { "key": "phone", "value": "+996312000000", "type": "text" },
+                { "key": "workingHours", "value": "Пн-Пт 09:00-18:00", "type": "text" },
                 { "key": "photo", "type": "file", "src": "" }
               ]
             },
-            "description": "Создать новый филиал. SUPER_ADMIN. latitude, longitude, photo — опциональны."
+            "description": "Создать новый филиал. SUPER_ADMIN. Все поля кроме address и personalCodePrefix — опциональны."
           }
         },
         {
@@ -71,26 +73,12 @@
                 { "key": "address", "value": "г. Бишкек, ул. Чуй 123", "type": "text" },
                 { "key": "latitude", "value": "42.8746", "type": "text" },
                 { "key": "longitude", "value": "74.5698", "type": "text" },
+                { "key": "phone", "value": "+996312000000", "type": "text" },
+                { "key": "workingHours", "value": "Пн-Пт 09:00-18:00", "type": "text" },
                 { "key": "photo", "type": "file", "src": "" }
               ]
             },
             "description": "Обновить филиал. SUPER_ADMIN. Все поля опциональны. Если photo передан — заменяет старый."
-          }
-        },
-        {
-          "name": "PATCH /admin/branches/:id/activate",
-          "request": {
-            "method": "PATCH",
-            "url": "{{baseUrl}}/admin/branches/{{branchId}}/activate",
-            "description": "Активировать филиал. SUPER_ADMIN."
-          }
-        },
-        {
-          "name": "PATCH /admin/branches/:id/deactivate",
-          "request": {
-            "method": "PATCH",
-            "url": "{{baseUrl}}/admin/branches/{{branchId}}/deactivate",
-            "description": "Деактивировать филиал. SUPER_ADMIN."
           }
         }
       ]
