@@ -51,6 +51,8 @@ public class UserEntity {
     @JoinColumn(name = "branch_id")
     private BranchEntity branch;
 
+    private LocalDateTime smartpointSyncedAt;
+
     private boolean chatBanned = false;
 
     @Enumerated(EnumType.STRING)

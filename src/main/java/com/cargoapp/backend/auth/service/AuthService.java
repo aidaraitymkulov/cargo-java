@@ -1,5 +1,6 @@
 package com.cargoapp.backend.auth.service;
 
+import com.cargoapp.backend.smartpoint.SmartPointService;
 import com.cargoapp.backend.auth.config.JwtProperties;
 import com.cargoapp.backend.auth.dto.*;
 import com.cargoapp.backend.auth.entity.ConfirmationEntity;
@@ -58,6 +59,7 @@ public class AuthService {
     private final AuthMapper authMapper;
     private final ManagerMapper managerMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final SmartPointService smartPointService;
 
     // =============================================
     // REGISTER (только мобильные пользователи)
@@ -293,6 +295,8 @@ public class AuthService {
 
         confirmation.setConfirmationStatus(ConfirmationStatus.VERIFIED);
         confirmationRepository.save(confirmation);
+
+        smartPointService.tryUpsertClient(user);
     }
 
     @Transactional

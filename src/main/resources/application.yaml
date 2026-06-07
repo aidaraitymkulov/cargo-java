@@ -32,3 +32,7 @@ server:
 
 app:
   upload-dir: uploads
+  smartpoint:
+    api-url: https://smartpoint.kg/api/v1/ades
+    api-token: ${SMARTPOINT_API_TOKEN:}
+    webhook-secret: ${SMARTPOINT_WEBHOOK_SECRET:}

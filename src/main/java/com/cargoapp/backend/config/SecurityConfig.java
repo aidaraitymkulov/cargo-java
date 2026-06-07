@@ -55,7 +55,8 @@ public class SecurityConfig {
                                 "/branches",
                                 "/news",
                                 "/news/**",
-                                "/uploads/**"
+                                "/uploads/**",
+                                "/webhook/**"
                         ).permitAll()
                         .requestMatchers("/admin/**")
                         .hasAnyRole("MANAGER", "SUPER_ADMIN")
