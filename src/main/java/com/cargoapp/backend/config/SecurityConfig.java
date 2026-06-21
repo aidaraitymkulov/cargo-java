@@ -56,6 +56,7 @@ public class SecurityConfig {
                                 "/news",
                                 "/news/**",
                                 "/uploads/**",
+                                "/webhook/**",
                                 "/ws/**"
                         ).permitAll()
                         .requestMatchers("/admin/**")
