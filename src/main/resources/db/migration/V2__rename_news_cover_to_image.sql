@@ -1,1 +1,0 @@
-ALTER TABLE news RENAME COLUMN cover TO image;

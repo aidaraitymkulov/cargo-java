@@ -1,1 +1,0 @@
-ALTER TABLE managers DROP COLUMN IF EXISTS password;

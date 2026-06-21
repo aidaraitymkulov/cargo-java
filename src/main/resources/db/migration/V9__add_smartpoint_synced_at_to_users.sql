@@ -1,1 +1,0 @@
-ALTER TABLE users ADD COLUMN smartpoint_synced_at TIMESTAMP;
