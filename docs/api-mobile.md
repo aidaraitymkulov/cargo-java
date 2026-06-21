@@ -27,8 +27,14 @@ Base URL: `https://api.adesexpress.com`
 
 ### Branch
 ```json
-{ "id": "uuid", "address": "г. Бишкек, Анкара-10", "personalCodePrefix": "AN", "isActive": true }
+{
+  "id": "uuid", "address": "г. Бишкек, Анкара-10", "personalCodePrefix": "AN",
+  "latitude": 42.8746, "longitude": 74.5698,
+  "photoUrl": "/uploads/branches/uuid_photo.jpg",
+  "phone": "+996312000000", "workingHours": "Пн-Пт 09:00-18:00"
+}
 ```
+`latitude`, `longitude`, `photoUrl`, `phone`, `workingHours` — опциональны, могут быть `null`.
 
 ### Product
 ```json
@@ -59,7 +65,20 @@ Base URL: `https://api.adesexpress.com`
 
 ### ChatMessage
 ```json
-{ "id": "uuid", "senderType": "USER | MANAGER", "message": "...", "isRead": false, "createdAt": "ISO" }
+{
+  "id": "uuid", "roomId": "uuid", "senderType": "USER | MANAGER",
+  "senderId": "uuid", "senderName": "Айдар Тестов",
+  "content": "...", "isRead": false, "createdAt": "ISO"
+}
+```
+
+### ChatRoom
+```json
+{
+  "id": "uuid", "userId": "uuid", "userFullName": "Айдар Тестов",
+  "userPersonalCode": "AN0001", "branchId": "uuid", "branchAddress": "г. Бишкек, Анкара-10",
+  "unreadCount": 3, "lastMessage": ChatMessage, "createdAt": "ISO"
+}
 ```
 
 ---
@@ -228,16 +247,35 @@ Errors: 404 NEWS_NOT_FOUND
 
 ## Chat
 
-### GET /chat/messages
-Query: `cursor` (id последнего сообщения), `limit` (default: 50)
+### GET /chat/rooms — Список чатов
 ```json
 // Response 200
-{ "items": [ChatMessage], "nextCursor": "uuid | null" }
+[ChatRoom]
 ```
 
-### WebSocket — `ws://api.adesexpress.com/ws/chat?token=<accessToken>`
-- Подписка: `/user/queue/messages`
-- Отправка: `/app/chat.send` → `{ "message": "текст" }`
+### GET /chat/rooms/{roomId}/messages — История сообщений
+Query: `page`, `pageSize`
+```json
+// Response 200
+{ "items": [ChatMessage], "page": 1, "pageSize": 20, "total": 45 }
+// Errors: 403 FORBIDDEN, 404 CHAT_ROOM_NOT_FOUND
+```
+
+### POST /chat/rooms/{roomId}/messages/read — Пометить как прочитанные
+Response 200. Errors: 403 FORBIDDEN, 404 CHAT_ROOM_NOT_FOUND
+
+### GET /chat/unread-count — Счётчик непрочитанных
+```json
+// Response 200
+{ "totalUnread": 5 }
+```
+
+### WebSocket — `ws://api.adesexpress.com/ws`
+STOMP CONNECT header: `Authorization: Bearer <accessToken>`
+- Подписка: `/topic/chat.room.{roomId}`
+- Отправка: `/app/chat.send` → `{ "roomId": "uuid", "content": "текст" }`
+- Прочитано: `/app/chat.read` → `{ "roomId": "uuid" }`
+- Ошибки: `/user/queue/errors`
 - Получение: ChatMessage
 
 ---

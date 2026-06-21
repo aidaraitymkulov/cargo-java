@@ -14,8 +14,6 @@ import java.util.UUID;
 public interface BranchRepository extends JpaRepository<BranchEntity, UUID> {
     Optional<BranchEntity> findByPersonalCodePrefix(String prefix);
 
-    List<BranchEntity> findAllByActiveTrue();
-
     boolean existsByPersonalCodePrefix(String prefix);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

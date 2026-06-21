@@ -38,10 +38,14 @@ Base URL: `https://api.adesexpress.com/admin`
 ```json
 {
   "id": "uuid", "address": "г. Бишкек, Анкара-10",
-  "personalCodePrefix": "AN", "isActive": true,
+  "personalCodePrefix": "AN",
+  "latitude": 42.8746, "longitude": 74.5698,
+  "photoUrl": "/uploads/branches/uuid_photo.jpg",
+  "phone": "+996312000000", "workingHours": "Пн-Пт 09:00-18:00",
   "nextSequence": 42, "createdAt": "ISO", "updatedAt": "ISO"
 }
 ```
+`latitude`, `longitude`, `photoUrl`, `phone`, `workingHours` — опциональны, могут быть `null`.
 
 ### Product
 ```json
@@ -110,33 +114,36 @@ Response 204. Errors: 401, 403, 404 NOT_FOUND, 409 CONFLICT (нельзя уда
 ## Филиалы — `/admin/branches` (SUPER_ADMIN)
 
 ### POST /admin/branches
+Body: `multipart/form-data`
+- `address` (text, обязательно)
+- `personalCodePrefix` (text, обязательно)
+- `latitude` (text/number, опционально)
+- `longitude` (text/number, опционально)
+- `photo` (file, опционально, только image/*)
 ```json
-// Request
-{ "address": "г. Бишкек, Анкара-10", "personalCodePrefix": "D" }
 // Response 201: Branch
 // Errors: 400 VALIDATION_ERROR, 409 CONFLICT (prefix занят)
 ```
 
 ### GET /admin/branches
 ```json
-// Response 200
-{ "items": [Branch], "page": 1, "pageSize": 50, "total": 5 }
+// Response 200: [Branch]
 ```
 
 ### GET /admin/branches/{branchId} → Branch
 Errors: 404 BRANCH_NOT_FOUND
 
 ### PATCH /admin/branches/{branchId}
+Body: `multipart/form-data` (все поля опциональны)
+- `address` (text)
+- `latitude` (text/number)
+- `longitude` (text/number)
+- `photo` (file, только image/*) — если передан, старый файл удаляется
 ```json
-// Request (все опциональные)
-{ "address": "...", "personalCodePrefix": "AN", "isActive": true }
 // Response 200: Branch
-// Errors: 404 BRANCH_NOT_FOUND, 409 CONFLICT
+// Errors: 404 BRANCH_NOT_FOUND
 ```
 
-### PATCH /admin/branches/{branchId}/activate → Branch
-### PATCH /admin/branches/{branchId}/deactivate → Branch
-Без тела. Errors: 404 BRANCH_NOT_FOUND
 
 ---
 
@@ -338,38 +345,40 @@ Response 204. Errors: 404 NEWS_NOT_FOUND
 
 ---
 
-## Чат — `/admin/chats`
+## Чат — `/admin/chat`
 
-### GET /admin/chats/conversations
+### GET /admin/chat/rooms — Список чатов
+MANAGER — чаты пользователей своего филиала. SUPER_ADMIN — все чаты.
 ```json
 // Response 200
-{ "items": [{ "user": User, "lastMessage": ChatMessage,
-              "lastMessageAt": "ISO", "unreadCount": 3 }],
-  "page": 1, "pageSize": 50, "total": 10 }
+[ChatRoom]
 ```
+ChatRoom: `{ "id": "uuid", "userId": "uuid", "userFullName": "...", "userPersonalCode": "AN0001", "branchId": "uuid", "branchAddress": "...", "unreadCount": 3, "lastMessage": ChatMessage, "createdAt": "ISO" }`
 
-### GET /admin/chats/conversations/{userId}/messages
+### GET /admin/chat/rooms/{roomId}/messages — История сообщений
 Query: `page`, `pageSize`
 ```json
 // Response 200
-{ "items": [{ "id": "uuid", "userId": "uuid", "managerId": "uuid",
-              "senderType": "USER | MANAGER", "message": "...",
-              "isRead": true, "createdAt": "ISO" }],
-  "page": 1, "pageSize": 50, "total": 30 }
-// Errors: 404 USER_NOT_FOUND
+{ "items": [ChatMessage], "page": 1, "pageSize": 20, "total": 30 }
+// Errors: 403 FORBIDDEN, 404 CHAT_ROOM_NOT_FOUND
 ```
+ChatMessage: `{ "id": "uuid", "roomId": "uuid", "senderType": "USER | MANAGER", "senderId": "uuid", "senderName": "...", "content": "...", "isRead": true, "createdAt": "ISO" }`
 
-### POST /admin/chats/conversations/{userId}/messages
+### POST /admin/chat/rooms/{roomId}/messages/read — Пометить как прочитанные
+Response 200. Errors: 403 FORBIDDEN, 404 CHAT_ROOM_NOT_FOUND
+
+### GET /admin/chat/unread-count — Счётчик непрочитанных
 ```json
-// Request
-{ "message": "Здравствуйте! Ваш заказ уже в филиале." }
-// Response 201: ChatMessage (senderType: "MANAGER")
-// Errors: 404 USER_NOT_FOUND, 400 VALIDATION_ERROR
+// Response 200
+{ "totalUnread": 5 }
 ```
 
-### WebSocket — `ws://api.adesexpress.com/ws/chat` (cookie прикладывается автоматически)
-- Подписка: `/user/queue/messages`
-- Отправка: `/app/chat.send` → `{ "message": "текст" }`
+### WebSocket — `ws://api.adesexpress.com/ws` (cookie прикладывается автоматически)
+STOMP протокол. Cookie `accessToken` извлекается из HTTP upgrade запроса.
+- Подписка: `/topic/chat.room.{roomId}`
+- Отправка: `/app/chat.send` → `{ "roomId": "uuid", "content": "текст" }`
+- Прочитано: `/app/chat.read` → `{ "roomId": "uuid" }`
+- Ошибки: `/user/queue/errors`
 
 ---
 
