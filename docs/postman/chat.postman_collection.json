@@ -1,0 +1,165 @@
+{
+  "info": {
+    "name": "CargoApp — Chat",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "roomId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Mobile",
+      "item": [
+        {
+          "name": "Get My Rooms",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/chat/rooms",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Messages",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/chat/rooms/{{roomId}}/messages?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["chat", "rooms", "{{roomId}}", "messages"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Mark As Read",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/chat/rooms/{{roomId}}/messages/read",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/chat/unread-count",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get Rooms",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/chat/rooms",
+            "header": [
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Messages",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/chat/rooms/{{roomId}}/messages?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "chat", "rooms", "{{roomId}}", "messages"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            },
+            "header": [
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Mark As Read",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/chat/rooms/{{roomId}}/messages/read",
+            "header": [
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/chat/unread-count",
+            "header": [
+              {
+                "key": "X-Client-Type",
+                "value": "web"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "WebSocket",
+      "item": [
+        {
+          "name": "STOMP Connect (info)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/ws",
+            "description": "WebSocket endpoint. Используйте STOMP-клиент для подключения.\n\nSTOMP CONNECT headers:\n- Mobile: Authorization: Bearer <accessToken>\n- Admin: cookie accessToken извлекается автоматически\n\nТопики:\n- Подписка: /topic/chat.room.{roomId}\n- Отправка: /app/chat.send → { \"roomId\": \"uuid\", \"content\": \"текст\" }\n- Прочитано: /app/chat.read → { \"roomId\": \"uuid\" }\n- Ошибки: /user/queue/errors"
+          }
+        }
+      ]
+    }
+  ]
+}

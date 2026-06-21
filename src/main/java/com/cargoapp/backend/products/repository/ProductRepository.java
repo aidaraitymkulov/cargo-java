@@ -5,6 +5,7 @@ import com.cargoapp.backend.products.entity.ProductStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -26,6 +27,12 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
 
     @Query("SELECT MAX(p.updatedAt) FROM ProductEntity p WHERE p.user.id = :userId")
     Optional<LocalDateTime> findLastUpdatedAtByUserId(@Param("userId") UUID userId);
+
+    Optional<ProductEntity> findFirstByUser_PersonalCodeAndHatchAndStatusNotOrderByCreatedAtAsc(
+            String personalCode,
+            String hatch,
+            ProductStatus excludedStatus
+    );
 
     Optional<ProductEntity> findFirstByUser_IdAndHatchAndStatusNotOrderByCreatedAtAsc(
             UUID userId,
@@ -62,4 +69,10 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
 
     @Query("SELECT CAST(p.updatedAt AS date), COUNT(p) FROM ProductEntity p WHERE p.status = :status AND p.updatedAt >= :from AND p.updatedAt < :to AND p.user.branch.id = :branchId GROUP BY CAST(p.updatedAt AS date) ORDER BY CAST(p.updatedAt AS date)")
     List<Object[]> countDailyByStatusAndBranch(@Param("status") ProductStatus status, @Param("branchId") UUID branchId, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Modifying
+    @Query("UPDATE ProductEntity p SET p.status = :newStatus WHERE p.status = :oldStatus AND p.createdAt <= :before")
+    int bulkUpdateStatus(@Param("oldStatus") ProductStatus oldStatus,
+                         @Param("newStatus") ProductStatus newStatus,
+                         @Param("before") LocalDateTime before);
 }

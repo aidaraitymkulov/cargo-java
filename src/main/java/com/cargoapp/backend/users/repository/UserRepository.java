@@ -1,6 +1,7 @@
 package com.cargoapp.backend.users.repository;
 
 import com.cargoapp.backend.users.entity.UserEntity;
+import com.cargoapp.backend.users.entity.UserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,17 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID>, JpaSpec
     Optional<UserEntity> findByEmail(String email);
 
     Optional<UserEntity> findByPersonalCode(String personalCode);
+
+    @Query(value = """
+            SELECT u.* FROM users u
+            WHERE u.smartpoint_synced_at IS NULL
+            AND EXISTS (
+                SELECT 1 FROM confirmations c
+                WHERE c.user_id = u.id
+                AND c.confirmation_status = 'VERIFIED'
+            )
+            """, nativeQuery = true)
+    List<UserEntity> findAllConfirmedAndNotSynced();
 
     boolean existsByLogin(String login);
 
