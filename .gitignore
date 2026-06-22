@@ -36,7 +36,6 @@ build/
 
 ### Secrets ###
 application-local.yaml
-application-prod.yaml
 *.env
 
 ### Claude ###
