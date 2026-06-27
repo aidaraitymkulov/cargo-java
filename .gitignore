@@ -35,7 +35,6 @@ build/
 .vscode/
 
 ### Secrets ###
-application-local.yaml
 *.env
 
 ### Claude ###

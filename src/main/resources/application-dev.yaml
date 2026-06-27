@@ -1,0 +1,65 @@
+spring:
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 0
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/cargodev}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  mail:
+    host: smtp.gmail.com
+    port: 465
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+
+app:
+  smartpoint:
+    api-token: ${SMARTPOINT_API_TOKEN:dev-token-placeholder}
+    webhook-secret: ${SMARTPOINT_WEBHOOK_SECRET:dev-webhook-secret-placeholder}
+
+cors:
+  allowed-origins:
+    - http://localhost:5173
+
+admin:
+  login: ${ADMIN_LOGIN:admin}
+  password: ${ADMIN_PASSWORD:admin123}
+  email: ${ADMIN_EMAIL:admin@cargoapp.local}
+
+jwt:
+  access-secret: ${JWT_ACCESS_SECRET:dev-access-secret-at-least-32-characters-long}
+  refresh-secret: ${JWT_REFRESH_SECRET:dev-refresh-secret-at-least-32-characters-long}
+  access-expiration-ms: 900000
+  refresh-expiration-ms: 2592000000
+  cookie-secure: false
+  cookie-same-site: Lax
+
+logging:
+  level:
+    com.cargoapp: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
