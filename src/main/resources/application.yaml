@@ -2,7 +2,7 @@ spring:
   application:
     name: cargoapp-backend
   profiles:
-    active: local
+    active: dev
 
   jpa:
     hibernate:
